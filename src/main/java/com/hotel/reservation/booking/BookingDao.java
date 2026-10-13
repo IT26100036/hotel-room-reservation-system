@@ -8,6 +8,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,13 +35,46 @@ public class BookingDao implements CrudDao<Booking> {
     // Inserts a new booking and returns its generated id
     @Override
     public int create(Booking booking) {
-        return 0;
+        String sql = "INSERT INTO booking "
+                + "(reservation_id, guest_id, room_id, date_from, date_to, booking_type, status) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+        try (Connection con = dbConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);) {
+
+            // Only a ReservationBooking is linked to a reservation; walk-ins save NULL
+            if (booking instanceof ReservationBooking reservationBooking) {
+                ps.setInt(1, reservationBooking.getReservationId());
+            } else {
+                ps.setNull(1, Types.INTEGER);
+            }
+            ps.setInt(2, booking.getGuestId());
+            ps.setInt(3, booking.getRoomId());
+            ps.setObject(4, booking.getDateFrom());
+            ps.setObject(5, booking.getDateTo());
+            ps.setString(6, booking.getBookingType());
+            ps.setString(7, booking.getStatus().name());
+            ps.executeUpdate();
+
+            // Read the id MySQL generated and store it in the object
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                if (keys.next()) {
+                    int newId = keys.getInt(1);
+                    booking.setId(newId);
+                    return newId;
+                }
+            }
+            throw new RuntimeException("Booking was not saved");
+        } catch (SQLException e) {
+            throw new RuntimeException("Could not save booking", e);
+        }
     }
 
     // Returns the booking with this id, or null if not found
     @Override
     public Booking findById(int id) {
         String sql = SELECT_BOOKINGS + " WHERE b.booking_id = ?";
+
         try (Connection con = dbConnection.getConnection();
                 PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, id);
@@ -57,6 +92,7 @@ public class BookingDao implements CrudDao<Booking> {
     @Override
     public List<Booking> findAll() {
         String sql = SELECT_BOOKINGS + " ORDER BY b.booking_id DESC";
+
         List<Booking> bookings = new ArrayList<>();
         try (Connection con = dbConnection.getConnection();
                 PreparedStatement ps = con.prepareStatement(sql);
@@ -72,13 +108,34 @@ public class BookingDao implements CrudDao<Booking> {
     // Saves changes to room, dates and status
     @Override
     public boolean update(Booking booking) {
-        return false;
+        String sql = "UPDATE booking SET room_id = ?, date_from = ?, date_to = ?, status = ? "
+                + "WHERE booking_id = ?";
+
+        try (Connection con = dbConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, booking.getRoomId());
+            ps.setObject(2, booking.getDateFrom());
+            ps.setObject(3, booking.getDateTo());
+            ps.setString(4, booking.getStatus().name());
+            ps.setInt(5, booking.getId());
+            return ps.executeUpdate() == 1;
+        } catch (SQLException e) {
+            throw new RuntimeException("Could not update booking " + booking.getId(), e);
+        }
     }
 
     // Permanently removes a booking (only used for canceled bookings)
     @Override
     public boolean delete(int id) {
-        return false;
+        String sql = "DELETE FROM booking WHERE booking_id = ?";
+
+        try (Connection con = dbConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            return ps.executeUpdate() == 1;
+        } catch (SQLException e) {
+            throw new RuntimeException("Could not delete booking " + id, e);
+        }
     }
 
     // Turns one database row into the right kind of Booking object
