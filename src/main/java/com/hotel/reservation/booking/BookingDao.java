@@ -88,6 +88,24 @@ public class BookingDao implements CrudDao<Booking> {
         }
     }
 
+    // Returns only the bookings with this status, newest first
+    public List<Booking> findByStatus(BookingStatus status) {
+        String sql = SELECT_BOOKINGS + " WHERE b.status = ? ORDER BY b.booking_id DESC";
+        List<Booking> bookings = new ArrayList<>();
+
+        try (Connection con = dbConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, status.name());
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next())
+                    bookings.add(mapRow(rs));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Could not load " + status + " bookings", e);
+        }
+        return bookings;
+    }
+
     // Returns all bookings, newest first
     @Override
     public List<Booking> findAll() {
@@ -153,5 +171,32 @@ public class BookingDao implements CrudDao<Booking> {
                     rs.getInt("reservation_id"), rs.getDouble("advance_amount"));
         }
         return new WalkInBooking(id, guestId, roomId, dateFrom, dateTo, status);
+    }
+
+    // True if another active booking holds this room on any of these nights
+    // Canceled and checked-out bookings do not block the room
+    // A stay ending on the day another starts is not a clash (strict < and >)
+    // excludeBookingId: the booking being edited (so it does not clash with
+    // itself); 0 for a new booking
+    public boolean hasOverlap(int roomId, LocalDate from, LocalDate to, int excludeBookingId) {
+        String sql = "SELECT COUNT(*) FROM booking "
+                + "WHERE room_id = ? "
+                + "AND status NOT IN ('CANCELLED', 'CHECKED_OUT') "
+                + "AND date_from < ? AND date_to > ? "
+                + "AND booking_id <> ?";
+
+        try (Connection con = dbConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, roomId);
+            ps.setObject(2, to);
+            ps.setObject(3, from);
+            ps.setInt(4, excludeBookingId);
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Could not check room " + roomId + " for overlaps", e);
+        }
     }
 }
