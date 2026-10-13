@@ -99,4 +99,43 @@ class BookingDaoTest {
         assertFalse(bookingDao.update(ghost));
         assertFalse(bookingDao.delete(999));
     }
+
+    @Test
+    void findByStatusReturnsOnlyThatStatus() {
+        List<Booking> confirmed = bookingDao.findByStatus(BookingStatus.CONFIRMED);
+        assertEquals(3, confirmed.size());
+        for (Booking b : confirmed) {
+            assertEquals(BookingStatus.CONFIRMED, b.getStatus());
+        }
+        assertEquals(8, confirmed.get(0).getId());
+
+        assertEquals(2, bookingDao.findByStatus(BookingStatus.CHECKED_IN).size());
+        assertEquals(1, bookingDao.findByStatus(BookingStatus.CANCELLED).size());
+    }
+
+    @Test
+    void hasOverlapFindsClashWithActiveBooking() {
+        assertTrue(bookingDao.hasOverlap(6,
+                LocalDate.of(2026, 10, 14), LocalDate.of(2026, 10, 16), 0));
+    }
+
+    @Test
+    void hasOverlapIgnoresCancelledAndCheckedOutBookings() {
+        assertFalse(bookingDao.hasOverlap(11,
+                LocalDate.of(2026, 10, 25), LocalDate.of(2026, 10, 27), 0));
+        assertFalse(bookingDao.hasOverlap(9,
+                LocalDate.of(2026, 10, 13), LocalDate.of(2026, 10, 14), 0));
+    }
+
+    @Test
+    void hasOverlapAllowsBackToBackStays() {
+        assertFalse(bookingDao.hasOverlap(6,
+                LocalDate.of(2026, 10, 15), LocalDate.of(2026, 10, 17), 0));
+    }
+
+    @Test
+    void hasOverlapSkipsTheBookingBeingEdited() {
+        assertFalse(bookingDao.hasOverlap(6,
+                LocalDate.of(2026, 10, 13), LocalDate.of(2026, 10, 15), 2));
+    }
 }
