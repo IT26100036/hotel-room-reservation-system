@@ -26,11 +26,13 @@ public class BookingDao implements CrudDao<Booking> {
         this.dbConnection = dbConnection;
     }
 
-    // Booking columns plus the advance from the linked reservation.
     // LEFT JOIN keeps walk-in bookings, which have no reservation.
     private static final String SELECT_BOOKINGS = "SELECT b.booking_id, b.reservation_id, b.guest_id, b.room_id, b.date_from, b.date_to, "
-            + "b.booking_type, b.status, r.advance_amount "
-            + "FROM booking b LEFT JOIN reservation r ON b.reservation_id = r.reservation_id";
+            + "b.booking_type, b.status, r.advance_amount, g.name AS guest_name, rm.room_no "
+            + "FROM booking b "
+            + "LEFT JOIN reservation r ON b.reservation_id = r.reservation_id "
+            + "LEFT JOIN guest g ON b.guest_id = g.guest_id "
+            + "LEFT JOIN room rm ON b.room_id = rm.room_id";
 
     // Inserts a new booking and returns its generated id
     @Override
@@ -165,18 +167,23 @@ public class BookingDao implements CrudDao<Booking> {
         LocalDate dateFrom = rs.getObject("date_from", LocalDate.class);
         LocalDate dateTo = rs.getObject("date_to", LocalDate.class);
         BookingStatus status = BookingStatus.valueOf(rs.getString("status"));
+        int reservationId = rs.getInt("reservation_id");
+        double advanceAmount = rs.getDouble("advance_amount");
 
-        if ("RESERVATION".equals(rs.getString("booking_type"))) {
-            return new ReservationBooking(id, guestId, roomId, dateFrom, dateTo, status,
-                    rs.getInt("reservation_id"), rs.getDouble("advance_amount"));
-        }
-        return new WalkInBooking(id, guestId, roomId, dateFrom, dateTo, status);
+        Booking booking;
+        
+        if ("RESERVATION".equals(rs.getString("booking_type")))
+            booking = new ReservationBooking(id, guestId, roomId, dateFrom, dateTo, status, reservationId, advanceAmount);
+        else
+            booking = new WalkInBooking(id, guestId, roomId, dateFrom, dateTo, status);
+        booking.setGuestName(rs.getString("guest_name"));
+        booking.setRoomNo(rs.getString("room_no"));
+        return booking;
     }
 
     // True if another active booking holds this room on any of these nights
     // Canceled and checked-out bookings do not block the room
     // A stay ending on the day another starts is not a clash (strict < and >)
-    // excludeBookingId: the booking being edited (so it does not clash with itself); 0 for a new booking
     public boolean hasOverlap(int roomId, LocalDate from, LocalDate to, int excludeBookingId) {
         String sql = "SELECT COUNT(*) FROM booking "
                 + "WHERE room_id = ? "
