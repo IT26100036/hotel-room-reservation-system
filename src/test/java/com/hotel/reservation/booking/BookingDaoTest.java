@@ -41,6 +41,9 @@ class BookingDaoTest {
         assertEquals(5000.0, ((ReservationBooking) booking).getAdvancePaid());
         assertEquals(3, booking.getNights());
         assertEquals(49000.0, booking.calculateAmountDue(54000));
+        // guest name and room number come from the joined tables
+        assertEquals("Anjali Fernando", booking.getGuestName());
+        assertEquals("105", booking.getRoomNo());
     }
 
     @Test
