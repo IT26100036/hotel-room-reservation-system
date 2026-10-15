@@ -5,6 +5,8 @@ import java.time.LocalDate;
 
 public abstract class Booking extends RoomAllocation {
     private BookingStatus status;
+    private String guestName;
+    private String roomNo;
 
     protected Booking() {
     }
@@ -44,6 +46,22 @@ public abstract class Booking extends RoomAllocation {
         if (status == null)
             throw new IllegalArgumentException("Booking status is required");
         this.status = status;
+    }
+
+    public String getGuestName() {
+        return guestName;
+    }
+
+    public void setGuestName(String guestName) {
+        this.guestName = guestName;
+    }
+
+    public String getRoomNo() {
+        return roomNo;
+    }
+
+    public void setRoomNo(String roomNo) {
+        this.roomNo = roomNo;
     }
 
     @Override
