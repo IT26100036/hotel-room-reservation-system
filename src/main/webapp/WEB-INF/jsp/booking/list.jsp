@@ -41,7 +41,51 @@
 </div>
 
 <div class="panel">
-    <%--    content--%>
+    <table class="table table-hover align-middle">
+        <thead>
+        <tr>
+            <th>Booking</th>
+            <th>Guest</th>
+            <th>Room</th>
+            <th>Check-in</th>
+            <th>Check-out</th>
+            <th>Nights</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <c:forEach var="b" items="${bookings}">
+            <tr>
+                <td class="mono">${b.displayName}</td>
+                <td>${b.guestName}</td>
+                <td class="mono">${b.roomNo}</td>
+                <td class="mono">${b.dateFrom}</td>
+                <td class="mono">${b.dateTo}</td>
+                <td>${b.nights}</td>
+                <td>${b.bookingType == 'WALK_IN' ? 'Walk-in' : 'Reservation'}</td>
+                <td>
+                    <%-- One badge colour per status --%>
+                    <c:choose>
+                        <c:when test="${b.status == 'CONFIRMED'}"><span class="badge bg-primary">Confirmed</span></c:when>
+                        <c:when test="${b.status == 'CHECKED_IN'}"><span class="badge bg-success">Checked in</span></c:when>
+                        <c:when test="${b.status == 'CHECKED_OUT'}"><span class="badge bg-secondary">Checked out</span></c:when>
+                        <c:otherwise><span class="badge bg-danger">Cancelled</span></c:otherwise>
+                    </c:choose>
+                </td>
+                <td class="text-end">
+                    <a class="btn btn-sm btn-outline-secondary" href="${ctx}/booking/${b.id}">View</a>
+                </td>
+            </tr>
+        </c:forEach>
+        <c:if test="${empty bookings}">
+            <tr>
+                <td colspan="9" class="text-center text-muted py-4">No bookings found</td>
+            </tr>
+        </c:if>
+        </tbody>
+    </table>
 </div>
 
 <jsp:include page="/WEB-INF/jsp/common/footer.jsp"/>
