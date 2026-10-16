@@ -56,6 +56,40 @@ public class BookingService {
         bookingDao.update(booking);
     }
 
+    // ---------- status actions ----------
+    // Booking itself checks that each status change is allowed,
+    // so the service only loads, calls the method and saves.
+
+    // CONFIRMED -> CHECKED_IN (also for the Check-in/out module)
+    public void checkIn(int id) {
+        Booking booking = getBooking(id);
+        booking.checkIn();
+        bookingDao.update(booking);
+    }
+
+    // CHECKED_IN -> CHECKED_OUT (also for the Check-in/out module)
+    public void checkOut(int id) {
+        Booking booking = getBooking(id);
+        booking.checkOut();
+        bookingDao.update(booking);
+    }
+
+    // CONFIRMED -> CANCELLED
+    public void cancel(int id) {
+        Booking booking = getBooking(id);
+        booking.cancel();
+        bookingDao.update(booking);
+    }
+
+    // Permanently removes a booking. Only canceled bookings can be deleted,
+    // so the history of real stays is kept.
+    public void deleteBooking(int id) {
+        Booking booking = getBooking(id);
+        if (booking.getStatus() != BookingStatus.CANCELLED)
+            throw new IllegalStateException("Only a cancelled booking can be deleted");
+        bookingDao.delete(id);
+    }
+
     // Both dates must be given, and a booking cannot start in the past
     private void checkDates(LocalDate from, LocalDate to) {
         if (from == null || to == null)
