@@ -3,8 +3,15 @@ package com.hotel.reservation.booking;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.time.LocalDate;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
 
 // Web pages for bookings
 
@@ -28,6 +35,29 @@ public class BookingController {
 
         model.addAttribute("selectedStatus", status);
         model.addAttribute("statuses", BookingStatus.values());
+
+        List<Booking> all = bookingService.getAllBookings();
+        Map<BookingStatus, Integer> counts = new EnumMap<>(BookingStatus.class);
+        for (BookingStatus s : BookingStatus.values())
+            counts.put(s, 0);
+        for (Booking b : all)
+            counts.put(b.getStatus(), counts.get(b.getStatus()) + 1);
+        model.addAttribute("counts", counts);
+        model.addAttribute("totalCount", all.size());
         return "booking/list";
+    }
+
+    // GET /booking/5
+    // Shows one booking in full; goes back to the list if the id does not exist
+    @GetMapping("/{id}")
+    public String view(@PathVariable int id, Model model, RedirectAttributes redirect) {
+        try {
+            model.addAttribute("booking", bookingService.getBooking(id));
+            model.addAttribute("today", LocalDate.now());
+            return "booking/view";
+        } catch (IllegalArgumentException e) {
+            redirect.addFlashAttribute("error", e.getMessage());
+            return "redirect:/booking/list";
+        }
     }
 }
