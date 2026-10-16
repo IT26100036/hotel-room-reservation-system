@@ -28,7 +28,7 @@ public class BookingDao implements CrudDao<Booking> {
 
     // LEFT JOIN keeps walk-in bookings, which have no reservation.
     private static final String SELECT_BOOKINGS = "SELECT b.booking_id, b.reservation_id, b.guest_id, b.room_id, b.date_from, b.date_to, "
-            + "b.booking_type, b.status, r.advance_amount, g.name AS guest_name, rm.room_no "
+            + "b.booking_type, b.status, r.advance_amount, g.name AS guest_name, g.nic_passport, rm.room_no "
             + "FROM booking b "
             + "LEFT JOIN reservation r ON b.reservation_id = r.reservation_id "
             + "LEFT JOIN guest g ON b.guest_id = g.guest_id "
@@ -171,13 +171,15 @@ public class BookingDao implements CrudDao<Booking> {
         double advanceAmount = rs.getDouble("advance_amount");
 
         Booking booking;
-        
+
         if ("RESERVATION".equals(rs.getString("booking_type")))
-            booking = new ReservationBooking(id, guestId, roomId, dateFrom, dateTo, status, reservationId, advanceAmount);
+            booking = new ReservationBooking(id, guestId, roomId, dateFrom, dateTo, status, reservationId,
+                    advanceAmount);
         else
             booking = new WalkInBooking(id, guestId, roomId, dateFrom, dateTo, status);
         booking.setGuestName(rs.getString("guest_name"));
         booking.setRoomNo(rs.getString("room_no"));
+        booking.setGuestNicPassport(rs.getString("nic_passport"));
         return booking;
     }
 
