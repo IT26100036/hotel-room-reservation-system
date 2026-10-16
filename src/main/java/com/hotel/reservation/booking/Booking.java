@@ -1,12 +1,14 @@
 package com.hotel.reservation.booking;
 
 import com.hotel.reservation.common.RoomAllocation;
+
 import java.time.LocalDate;
 
 public abstract class Booking extends RoomAllocation {
     private BookingStatus status;
     private String guestName;
     private String roomNo;
+    private String guestNicPassport;
 
     protected Booking() {
     }
@@ -62,6 +64,14 @@ public abstract class Booking extends RoomAllocation {
 
     public void setRoomNo(String roomNo) {
         this.roomNo = roomNo;
+    }
+
+    public String getGuestNicPassport() {
+        return guestNicPassport;
+    }
+
+    public void setGuestNicPassport(String guestNicPassport) {
+        this.guestNicPassport = guestNicPassport;
     }
 
     @Override
