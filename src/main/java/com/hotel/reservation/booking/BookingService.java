@@ -56,6 +56,64 @@ public class BookingService {
         bookingDao.update(booking);
     }
 
+    // Moves the check-out date later for a guest who is already in the room.
+    // Only check-out changes; the room must be free for the extra nights.
+    public void extendStay(int id, LocalDate newDateTo) {
+        Booking booking = getBooking(id);
+        if (booking.getStatus() != BookingStatus.CHECKED_IN)
+            throw new IllegalStateException("Only a checked-in booking can be extended");
+        if (newDateTo == null)
+            throw new IllegalArgumentException("New check-out date is required");
+        if (!newDateTo.isAfter(booking.getDateTo()))
+            throw new IllegalArgumentException("New check-out date must be after " + booking.getDateTo());
+        // Only the extra nights need to be free
+        if (bookingDao.hasOverlap(booking.getRoomId(), booking.getDateTo(), newDateTo, id))
+            throw new IllegalStateException("Room is already booked for the extra nights");
+        booking.setDates(booking.getDateFrom(), newDateTo);
+        bookingDao.update(booking);
+    }
+
+    // Walk-in at the front desk: the stay starts today and the guest is checked in
+    // straight away ("Book & check in"). guestId 0 means a new guest, whose details
+    // are checked and saved first. Everything is checked before anything is saved.
+    // Returns the new booking id.
+    public int walkInAndCheckIn(int guestId, String name, String nicPassport, String contact, String email,
+                                int roomId, LocalDate dateTo) {
+        LocalDate today = LocalDate.now();
+        if (roomId <= 0)
+            throw new IllegalArgumentException("Choose a room");
+        if (dateTo == null)
+            throw new IllegalArgumentException("Check-out date is required");
+        if (!dateTo.isAfter(today))
+            throw new IllegalArgumentException("Check-out must be after today");
+        if (bookingDao.hasOverlap(roomId, today, dateTo, 0))
+            throw new IllegalStateException("Room is already booked for these dates");
+
+        if (guestId == 0) {
+            checkNewGuest(name, nicPassport, contact, email);
+            String cleanEmail = (email == null || email.isBlank()) ? null : email.trim();
+            guestId = bookingDao.createGuest(name.trim(), nicPassport.trim(), contact.trim(), cleanEmail);
+        }
+
+        int id = createWalkIn(guestId, roomId, today, dateTo);
+        checkIn(id);
+        return id;
+    }
+
+    // Rooms free tonight for a walk-in, with their nightly rate
+    public List<OptionItem> getAvailableRoomOptions(LocalDate from, LocalDate to) {
+        return bookingDao.findAvailableRoomOptions(from, to);
+    }
+
+    // Dropdown choices for the booking form
+    public List<OptionItem> getGuestOptions() {
+        return bookingDao.findGuestOptions();
+    }
+
+    public List<OptionItem> getRoomOptions() {
+        return bookingDao.findRoomOptions();
+    }
+
     // ---------- status actions ----------
     // Booking itself checks that each status change is allowed,
     // so the service only loads, calls the method and saves.
@@ -88,6 +146,24 @@ public class BookingService {
         if (booking.getStatus() != BookingStatus.CANCELLED)
             throw new IllegalStateException("Only a cancelled booking can be deleted");
         bookingDao.delete(id);
+    }
+
+    // Details for a new guest: name, NIC/passport and contact are required,
+    // the NIC/passport must not belong to a saved guest, email is optional
+    private void checkNewGuest(String name, String nicPassport, String contact, String email) {
+        if (name == null || name.isBlank())
+            throw new IllegalArgumentException("Guest full name is required");
+        if (nicPassport == null || nicPassport.isBlank())
+            throw new IllegalArgumentException("NIC / Passport no. is required");
+        if (nicPassport.trim().length() > 20)
+            throw new IllegalArgumentException("NIC / Passport no. is too long");
+        if (contact == null || contact.isBlank())
+            throw new IllegalArgumentException("Contact no. is required");
+        if (email != null && !email.isBlank() && !email.contains("@"))
+            throw new IllegalArgumentException("Email address is not valid");
+        if (bookingDao.guestExistsByNic(nicPassport.trim()))
+            throw new IllegalArgumentException("A guest with NIC / Passport " + nicPassport.trim()
+                    + " is already saved. Pick them from the guest list.");
     }
 
     // Both dates must be given, and a booking cannot start in the past

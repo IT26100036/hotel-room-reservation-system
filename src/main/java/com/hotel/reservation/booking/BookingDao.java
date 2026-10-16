@@ -207,4 +207,116 @@ public class BookingDao implements CrudDao<Booking> {
             throw new RuntimeException("Could not check room " + roomId + " for overlaps", e);
         }
     }
+
+    // ---------- dropdown data for the booking form ----------
+    // Read-only lookups in the guest and room tables.
+    // Can be swapped for the Guest and Room modules' DAOs when they are ready.
+
+    // All guests, A to Z: "Anjali Fernando (199545612345)"
+    public List<OptionItem> findGuestOptions() {
+        String sql = "SELECT guest_id, name, nic_passport FROM guest ORDER BY name";
+
+        List<OptionItem> options = new ArrayList<>();
+        try (Connection con = dbConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+            while (rs.next())
+                options.add(new OptionItem(rs.getInt("guest_id"),
+                        rs.getString("name") + " (" + rs.getString("nic_passport") + ")"));
+        } catch (SQLException e) {
+            throw new RuntimeException("Could not load guests", e);
+        }
+        return options;
+    }
+
+    // Rooms that can be booked (not under maintenance), by room number: "105 - Double"
+    // Free dates are still checked by hasOverlap when saving
+    public List<OptionItem> findRoomOptions() {
+        String sql = "SELECT room_id, room_no, type FROM room WHERE status <> 'MAINTENANCE' ORDER BY room_no";
+
+        List<OptionItem> options = new ArrayList<>();
+        try (Connection con = dbConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                String type = rs.getString("type");
+                // SUITE -> Suite
+                String niceType = type.charAt(0) + type.substring(1).toLowerCase();
+                options.add(new OptionItem(rs.getInt("room_id"), rs.getString("room_no") + " - " + niceType));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Could not load rooms", e);
+        }
+        return options;
+    }
+
+    // Rooms free right now for a walk-in: not under maintenance and no active booking
+    // on the given nights. Includes the nightly rate for the "Total amount due" box.
+    public List<OptionItem> findAvailableRoomOptions(LocalDate from, LocalDate to) {
+        String sql = "SELECT rm.room_id, rm.room_no, rm.type, rm.rate FROM room rm "
+                + "WHERE rm.status <> 'MAINTENANCE' "
+                + "AND NOT EXISTS (SELECT 1 FROM booking b WHERE b.room_id = rm.room_id "
+                + "AND b.status NOT IN ('CANCELLED', 'CHECKED_OUT') "
+                + "AND b.date_from < ? AND b.date_to > ?) "
+                + "ORDER BY rm.room_no";
+
+        List<OptionItem> options = new ArrayList<>();
+        try (Connection con = dbConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setObject(1, to);
+            ps.setObject(2, from);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String type = rs.getString("type");
+                    String niceType = type.charAt(0) + type.substring(1).toLowerCase();
+                    options.add(new OptionItem(rs.getInt("room_id"),
+                            rs.getString("room_no") + " - " + niceType, rs.getDouble("rate")));
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Could not load available rooms", e);
+        }
+        return options;
+    }
+
+    // ---------- new guest at the desk ----------
+    // Small write into the guest table so a walk-in can be booked in one step.
+    // Can be swapped for the Guest module's DAO when it is ready.
+
+    // True if a guest with this NIC or passport number is already saved
+    public boolean guestExistsByNic(String nicPassport) {
+        String sql = "SELECT COUNT(*) FROM guest WHERE nic_passport = ?";
+
+        try (Connection con = dbConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, nicPassport);
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Could not check guest " + nicPassport, e);
+        }
+    }
+
+    // Saves a new guest and returns the generated guest id
+    public int createGuest(String name, String nicPassport, String contact, String email) {
+        String sql = "INSERT INTO guest (name, nic_passport, contact, email) VALUES (?, ?, ?, ?)";
+
+        try (Connection con = dbConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, name);
+            ps.setString(2, nicPassport);
+            ps.setString(3, contact);
+            ps.setString(4, email);   // null when not given
+            ps.executeUpdate();
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                if (keys.next())
+                    return keys.getInt(1);
+            }
+            throw new RuntimeException("Guest was not saved");
+        } catch (SQLException e) {
+            throw new RuntimeException("Could not save guest", e);
+        }
+    }
 }
