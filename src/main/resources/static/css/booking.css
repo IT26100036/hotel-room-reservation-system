@@ -1,0 +1,384 @@
+/* =============================================================
+   Booking Management pages (list, view, form)
+   Every class starts with bk- so nothing clashes with other modules.
+   ============================================================= */
+
+/* ---------- details page head ---------- */
+.bk-crumb {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.bk-crumb a {
+  color: var(--muted);
+  text-decoration: none;
+}
+.bk-crumb a:hover {
+  color: var(--navy);
+}
+.bk-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.bk-title h2 {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  letter-spacing: 0.02em;
+}
+
+/* ---------- status pills (list table, filter chips, details page) ---------- */
+.bk-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.bk-pill-confirmed {
+  background: var(--navy-soft);
+  color: var(--navy);
+}
+.bk-pill-in {
+  background: #e5f4ec;
+  color: #1e7a4c;
+}
+.bk-pill-out {
+  background: #eef0f3;
+  color: #4b5563;
+}
+.bk-pill-cancelled {
+  background: #fbeaea;
+  color: #b42318;
+}
+
+/* ---------- details page cards ---------- */
+.bk-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.bk-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+/* Stay: check-in  ---- nights ---->  check-out */
+.bk-stay {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+}
+.bk-date-day {
+  font-size: 34px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink);
+}
+.bk-date-sub {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 4px;
+  text-transform: capitalize;
+}
+.bk-date-end {
+  text-align: right;
+}
+.bk-nights {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 140px;
+}
+.bk-nights-line {
+  position: relative;
+  width: 100%;
+  height: 1px;
+  background: var(--line);
+  margin: 8px 0;
+}
+.bk-nights-line::after {
+  content: "";
+  position: absolute;
+  right: -1px;
+  top: -4px;
+  border: 4px solid transparent;
+  border-left: 6px solid var(--line);
+}
+.bk-nights-count {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--navy);
+  background: var(--navy-soft);
+  padding: 2px 10px;
+  border-radius: 999px;
+}
+.bk-progress {
+  height: 6px;
+  background: #eef0f3;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 18px;
+}
+.bk-progress > span {
+  display: block;
+  height: 100%;
+  background: var(--navy);
+  border-radius: 999px;
+}
+.bk-stay-text {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+.bk-stay-text.late {
+  color: #b42318;
+}
+
+/* Status track: Confirmed -> Checked in -> Checked out */
+.bk-track {
+  display: flex;
+  align-items: flex-start;
+}
+.bk-step {
+  flex: 1;
+  position: relative;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+.bk-step::before {
+  content: "";
+  position: absolute;
+  top: 11px;
+  left: -50%;
+  width: 100%;
+  height: 2px;
+  background: var(--line);
+}
+.bk-step:first-child::before {
+  display: none;
+}
+.bk-dot {
+  position: relative;
+  z-index: 1;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  margin: 0 auto 6px;
+  background: #fff;
+  border: 2px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-family: var(--font-mono);
+}
+.bk-step.done {
+  color: var(--ink);
+}
+.bk-step.done .bk-dot {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: #fff;
+}
+.bk-step.done::before {
+  background: var(--navy);
+}
+.bk-step.now .bk-dot {
+  box-shadow: 0 0 0 4px var(--navy-soft);
+}
+.bk-cancel-note {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #fbeaea;
+  color: #b42318;
+  font-size: 13px;
+}
+
+/* Right column */
+.bk-person {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.bk-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 16px;
+}
+.bk-name {
+  font-weight: 600;
+}
+.bk-meta {
+  font-size: 12px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+}
+.bk-room {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--navy);
+  line-height: 1;
+}
+.bk-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 8px 0;
+  border-top: 1px dashed var(--line);
+  font-size: 13px;
+}
+.bk-label + .bk-row {
+  border-top: 0;
+  padding-top: 0;
+}
+.bk-row .k {
+  color: var(--muted);
+}
+.bk-money {
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
+.bk-gold {
+  border-top: 3px solid var(--gold);
+}
+
+/* ---------- list page: status filter chips ---------- */
+.bk-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.bk-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  font-size: 13px;
+  text-decoration: none;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+.bk-chip:not(.active):hover {
+  border-color: var(--navy);
+  color: var(--navy);
+}
+.bk-chip.active {
+  font-weight: 600;
+}
+.bk-chip-all.active {
+  background: var(--navy-soft);
+  color: var(--navy);
+  border-color: var(--navy);
+}
+.bk-chip .count {
+  margin-left: 6px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.bk-chip.active .count {
+  color: inherit;
+}
+.bk-chip.active.bk-pill-confirmed,
+.bk-chip.active.bk-pill-in,
+.bk-chip.active.bk-pill-out,
+.bk-chip.active.bk-pill-cancelled {
+  border-color: currentColor;
+}
+
+/* ---------- list page: table ---------- */
+.bk-table td {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+.bk-id {
+  font-family: var(--font-mono);
+  color: var(--ink);
+  text-decoration: none;
+}
+.bk-id:hover {
+  color: var(--navy);
+  text-decoration: underline;
+}
+.bk-guest {
+  font-weight: 600;
+  color: var(--ink);
+}
+.bk-sub {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+}
+.bk-roomno {
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+.bk-stay-range {
+  font-family: var(--font-mono);
+}
+.bk-month {
+  text-transform: capitalize;
+}
+.bk-pill {
+  font-weight: 600;
+}
+.bk-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.bk-actions form {
+  margin: 0;
+}
+.bk-btn {
+  padding: 5px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 6px;
+}
+.bk-btn-light {
+  background: #fff;
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+.bk-btn-light:hover {
+  border-color: var(--navy);
+  color: var(--navy);
+}
+.bk-btn-danger {
+  background: #fff;
+  border: 1px solid #f1c4c0;
+  color: #b42318;
+}
+.bk-btn-danger:hover {
+  background: #fbeaea;
+  color: #b42318;
+  border-color: #b42318;
+}
