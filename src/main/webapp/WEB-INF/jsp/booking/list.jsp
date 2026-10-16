@@ -111,7 +111,8 @@
                                     <button class="btn btn-navy bk-btn">Check in</button>
                                 </form>
                                 <a class="btn bk-btn bk-btn-light" href="${ctx}/booking/${b.id}/edit">Edit</a>
-                                <form method="post" action="${ctx}/booking/${b.id}/cancel">
+                                <form method="post" action="${ctx}/booking/${b.id}/cancel"
+                                      onsubmit="return confirm('Cancel booking ${b.displayName}? This cannot be undone.');">
                                     <button class="btn bk-btn bk-btn-danger">Cancel</button>
                                 </form>
                             </c:when>

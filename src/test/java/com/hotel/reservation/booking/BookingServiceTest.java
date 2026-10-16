@@ -144,4 +144,58 @@ class BookingServiceTest {
                 () -> bookingService.updateBooking(2, ROOM, daysFromToday(80), daysFromToday(82)));
         assertEquals("Only a confirmed booking can be changed", e.getMessage());
     }
+
+    // ---------- status actions ----------
+
+    // CONFIRMED -> CHECKED_IN -> CHECKED_OUT, saved in the database each time
+    @Test
+    void checkInThenCheckOutMovesStatusForward() {
+        int id = bookingService.createWalkIn(GUEST, ROOM, daysFromToday(90), daysFromToday(92));
+        try {
+            bookingService.checkIn(id);
+            assertEquals(BookingStatus.CHECKED_IN, bookingService.getBooking(id).getStatus());
+
+            bookingService.checkOut(id);
+            assertEquals(BookingStatus.CHECKED_OUT, bookingService.getBooking(id).getStatus());
+        } finally {
+            bookingDao.delete(id);
+        }
+    }
+
+    // A cancelled booking can be deleted, and is gone afterwards
+    @Test
+    void cancelThenDeleteRemovesBooking() {
+        int id = bookingService.createWalkIn(GUEST, ROOM, daysFromToday(95), daysFromToday(97));
+        try {
+            bookingService.cancel(id);
+            assertEquals(BookingStatus.CANCELLED, bookingService.getBooking(id).getStatus());
+
+            bookingService.deleteBooking(id);
+            assertThrows(IllegalArgumentException.class, () -> bookingService.getBooking(id));
+        } finally {
+            bookingDao.delete(id);   // does nothing if the test already deleted it
+        }
+    }
+
+    // Sample booking 4 is CHECKED_OUT, so it cannot be checked in again
+    @Test
+    void checkInRejectsCheckedOutBooking() {
+        assertThrows(IllegalStateException.class, () -> bookingService.checkIn(4));
+        assertEquals(BookingStatus.CHECKED_OUT, bookingService.getBooking(4).getStatus());
+    }
+
+    // Sample booking 2 is CHECKED_IN, so it cannot be cancelled
+    @Test
+    void cancelRejectsCheckedInBooking() {
+        assertThrows(IllegalStateException.class, () -> bookingService.cancel(2));
+        assertEquals(BookingStatus.CHECKED_IN, bookingService.getBooking(2).getStatus());
+    }
+
+    // Sample booking 8 is CONFIRMED, so it cannot be deleted
+    @Test
+    void deleteRejectsBookingThatIsNotCancelled() {
+        Exception e = assertThrows(IllegalStateException.class, () -> bookingService.deleteBooking(8));
+        assertEquals("Only a cancelled booking can be deleted", e.getMessage());
+        assertNotNull(bookingService.getBooking(8));
+    }
 }
