@@ -4,6 +4,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -59,5 +60,45 @@ public class BookingController {
             redirect.addFlashAttribute("error", e.getMessage());
             return "redirect:/booking/list";
         }
+    }
+
+    // ---------- row actions (buttons on the list page) ----------
+    // Each one changes the status, then goes back to the list with a message
+    // If the change is not allowed, the error from Booking is shown instead
+
+    // POST /booking/5/check-in
+    @PostMapping("/{id}/check-in")
+    public String checkIn(@PathVariable int id, RedirectAttributes redirect) {
+        try {
+            bookingService.checkIn(id);
+            redirect.addFlashAttribute("success", "B-" + id + " checked in");
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            redirect.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/booking/list";
+    }
+
+    // POST /booking/5/check-out
+    @PostMapping("/{id}/check-out")
+    public String checkOut(@PathVariable int id, RedirectAttributes redirect) {
+        try {
+            bookingService.checkOut(id);
+            redirect.addFlashAttribute("success", "B-" + id + " checked out");
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            redirect.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/booking/list";
+    }
+
+    // POST /booking/5/cancel
+    @PostMapping("/{id}/cancel")
+    public String cancel(@PathVariable int id, RedirectAttributes redirect) {
+        try {
+            bookingService.cancel(id);
+            redirect.addFlashAttribute("success", "B-" + id + " cancelled");
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            redirect.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/booking/list";
     }
 }
