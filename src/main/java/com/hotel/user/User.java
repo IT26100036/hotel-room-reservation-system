@@ -1,6 +1,6 @@
 package com.hotel.user;
 
-public class User {
+public abstract class User {
     private String userId;
     private String name;
     private String nicOrPassport;
@@ -20,6 +20,8 @@ public class User {
         this.email = email;
         this.address = address;
     }
+
+    public abstract String getRole();
 
     public String getUserId() {
         return userId;
@@ -68,8 +70,5 @@ public class User {
     public void setAddress(String address) {
         this.address = address;
     }
-
-    public abstract String getRole();
-
 
 }
