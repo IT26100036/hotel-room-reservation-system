@@ -8,6 +8,19 @@ public class User {
     private String email;
     private String address;
 
+    public User(){
+    }
+
+    public User(String userId, String name, String nicOrPassport,
+                String contactNo, String email, String address) {
+        this.userId = userId;
+        this.name = name;
+        this.nicOrPassport = nicOrPassport;
+        this.contactNo = contactNo;
+        this.email = email;
+        this.address = address;
+    }
+
     public String getUserId() {
         return userId;
     }
@@ -55,5 +68,8 @@ public class User {
     public void setAddress(String address) {
         this.address = address;
     }
+
+    public abstract String getRole();
+
 
 }
