@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff History Logs - Hotel Reservation</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <div class="container">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Staff Activity Logs</h1>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Audit trail for staff create, update, delete, login, and logout</p>
+            </div>
+            <a th:href="@{/staff}" class="btn btn-secondary">Back to Staff List</a>
+        </div>
+
+        <div class="card">
+            <div th:if="${#lists.isEmpty(logs)}" class="no-history">
+                <p>No history yet</p>
+            </div>
+            <ul th:if="${!#lists.isEmpty(logs)}" class="log-list">
+                <li th:each="log : ${logs}" class="log-item" th:text="${log}">
+                    2026-10-20 10:15 | CREATE | S002 | Added staff S005 Kamal Perera
+                </li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
