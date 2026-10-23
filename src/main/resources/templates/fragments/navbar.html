@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head></head>
+<body>
+<nav th:fragment="navbar" class="navbar">
+    <a class="navbar-brand" th:href="@{/staff}">
+        Hotel <span>Staff Portal</span>
+    </a>
+    <ul class="navbar-nav">
+        <!-- Staff Management: Available for logged-in staff -->
+        <li th:if="${session.loggedInStaff != null}">
+            <a th:href="@{/staff}">Staff Management</a>
+        </li>
+        <li th:if="${session.loggedInStaff != null and session.loggedInStaff.staffType.name() == 'ADMIN'}">
+            <a th:href="@{/staff/history}">Staff Logs</a>
+        </li>
+
+        <!-- User profile badge & logout -->
+        <li th:if="${session.loggedInStaff != null}">
+            <span class="user-badge">
+                <strong th:text="${session.loggedInStaff.name}">Staff Member</strong>
+                (<span th:text="${session.loggedInStaff.staffType}">ROLE</span>)
+            </span>
+        </li>
+        <li th:if="${session.loggedInStaff != null}">
+            <a th:href="@{/logout}" class="btn-logout">Logout</a>
+        </li>
+    </ul>
+</nav>
+</body>
+</html>

@@ -1,18 +1,20 @@
 package com.hotel.user;
 
-public abstract class User {
-    private String userId;
-    private String name;
-    private String nicOrPassport;
-    private String contactNo;
-    private String email;
-    private String address;
+import java.io.Serializable;
 
-    public User(){
+public abstract class User implements Serializable {
+
+    protected String userId;
+    protected String name;
+    protected String nicOrPassport;
+    protected String contactNo;
+    protected String email;
+    protected String address;
+
+    public User() {
     }
 
-    public User(String userId, String name, String nicOrPassport,
-                String contactNo, String email, String address) {
+    public User(String userId, String name, String nicOrPassport, String contactNo, String email, String address) {
         this.userId = userId;
         this.name = name;
         this.nicOrPassport = nicOrPassport;
@@ -70,5 +72,4 @@ public abstract class User {
     public void setAddress(String address) {
         this.address = address;
     }
-
 }

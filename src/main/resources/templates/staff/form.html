@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${isEdit == true ? 'Edit Staff - Hotel Reservation' : 'Create Staff - Hotel Reservation'}">Staff Form</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <div class="container">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title" th:text="${isEdit == true ? 'Edit Staff Member' : 'Add New Staff Member'}">Staff Form</h1>
+                <p style="color: var(--text-muted); font-size: 0.9rem;"
+                   th:text="${isEdit == true ? 'Update details for staff ID ' + (staff != null ? staff.userId : '') : 'Register a new hotel employee or administrator'}"></p>
+            </div>
+            <a th:href="@{/staff}" class="btn btn-secondary">Back to Staff List</a>
+        </div>
+
+        <!-- Validation errors -->
+        <div th:if="${errors != null and !errors.isEmpty()}" class="alert alert-danger">
+            <strong>Please correct the following errors:</strong>
+            <ul>
+                <li th:each="err : ${errors}" th:text="${err}">Validation error message</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <form th:action="${isEdit == true} ? @{'/staff/edit/' + ${staff.userId}} : @{/staff/create}" th:object="${staff}" method="post">
+                <div class="form-grid">
+                    <!-- User ID (Automatic, readonly if edit) -->
+                    <div class="form-group" th:if="${isEdit == true}">
+                        <label for="userId">User ID</label>
+                        <input type="text" id="userId" name="userId" th:value="*{userId}" class="form-control" readonly style="background-color: #f1f5f9;">
+                    </div>
+
+                    <!-- Name -->
+                    <div class="form-group">
+                        <label for="name">Full Name * (3-100 letters and spaces)</label>
+                        <input type="text" id="name" th:field="*{name}" class="form-control" placeholder="e.g. Kamal Perera" required>
+                    </div>
+
+                    <!-- NIC / Passport -->
+                    <div class="form-group">
+                        <label for="nicOrPassport">NIC * (9 digits + V/X or 12 digits)</label>
+                        <input type="text" id="nicOrPassport" th:field="*{nicOrPassport}" class="form-control"
+                               placeholder="e.g. 200112345678 or 951234567V" th:readonly="${isEdit == true}"
+                               th:style="${isEdit == true ? 'background-color: #f1f5f9;' : ''}" required>
+                        <small th:if="${isEdit == true}" style="color: var(--text-muted);">NIC cannot be changed</small>
+                    </div>
+
+                    <!-- Contact No -->
+                    <div class="form-group">
+                        <label for="contactNo">Contact Number * (10 digits starting with 0)</label>
+                        <input type="text" id="contactNo" th:field="*{contactNo}" class="form-control" placeholder="e.g. 0771234567" required>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="form-group">
+                        <label for="email">Email (Optional)</label>
+                        <input type="email" id="email" th:field="*{email}" class="form-control" placeholder="e.g. kamal@gmail.com">
+                    </div>
+
+                    <!-- Address -->
+                    <div class="form-group">
+                        <label for="address">Address (Optional, max 255 chars)</label>
+                        <input type="text" id="address" th:field="*{address}" class="form-control" placeholder="e.g. Colombo 05">
+                    </div>
+
+                    <!-- Staff Type -->
+                    <div class="form-group">
+                        <label for="staffType">Staff Type *</label>
+                        <select id="staffType" th:field="*{staffType}" class="form-control" onchange="toggleCredentials()" required>
+                            <option th:each="st : ${staffTypes}" th:value="${st}" th:text="${st}">ADMIN</option>
+                        </select>
+                    </div>
+
+                    <!-- Position -->
+                    <div class="form-group">
+                        <label for="position">Position *</label>
+                        <input type="text" id="position" th:field="*{position}" class="form-control" placeholder="e.g. Front Desk" required>
+                    </div>
+
+                    <!-- Salary -->
+                    <div class="form-group">
+                        <label for="salary">Salary (LKR) * (Must be > 0)</label>
+                        <input type="number" step="0.01" id="salary" th:field="*{salary}" class="form-control" placeholder="e.g. 85000.00" required>
+                    </div>
+
+                    <!-- Joined Date -->
+                    <div class="form-group">
+                        <label for="joinedDate">Joined Date * (Cannot be future date)</label>
+                        <input type="date" id="joinedDate" th:field="*{joinedDate}" class="form-control" required>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="form-group">
+                        <label for="status">Status *</label>
+                        <select id="status" th:field="*{status}" class="form-control" required>
+                            <option th:each="stat : ${statuses}" th:value="${stat}" th:text="${stat}">ACTIVE</option>
+                        </select>
+                    </div>
+
+                    <!-- Username (ADMIN / RECEPTIONIST only) -->
+                    <div class="form-group" id="usernameGroup">
+                        <label for="username">Username (ADMIN/RECEPTIONIST: 4-20 chars, letters, digits, dots, underscores)</label>
+                        <input type="text" id="username" th:field="*{username}" class="form-control" placeholder="e.g. kamal.rec">
+                    </div>
+
+                    <!-- Password (ADMIN / RECEPTIONIST only) -->
+                    <div class="form-group" id="passwordGroup">
+                        <label for="password">Password <span th:if="${isEdit != true}">* (Min 8 chars, at least 1 letter and 1 number)</span><span th:if="${isEdit == true}">(Leave blank to keep current)</span></label>
+                        <input type="password" id="password" name="password" class="form-control" placeholder="e.g. admin123">
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <a th:href="@{/staff}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary" th:text="${isEdit == true ? 'Update Staff Member' : 'Save Staff Member'}">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function toggleCredentials() {
+            const staffType = document.getElementById("staffType").value;
+            const usernameGroup = document.getElementById("usernameGroup");
+            const passwordGroup = document.getElementById("passwordGroup");
+            const usernameInput = document.getElementById("username");
+            const passwordInput = document.getElementById("password");
+
+            if (staffType === 'EMPLOYEE') {
+                usernameGroup.style.display = 'none';
+                passwordGroup.style.display = 'none';
+                if (usernameInput) usernameInput.value = '';
+                if (passwordInput) passwordInput.value = '';
+            } else {
+                usernameGroup.style.display = 'flex';
+                passwordGroup.style.display = 'flex';
+            }
+        }
+        document.addEventListener('DOMContentLoaded', toggleCredentials);
+    </script>
+</body>
+</html>
