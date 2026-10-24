@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Details - Hotel Reservation</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <div class="container">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title" th:text="${customer.customerName}">Customer Name</h1>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">
+                    <span th:text="${customer.customerId}">C001</span>
+                    <span class="role-badge" th:text="${customer.customerType}">LOCAL</span>
+                </p>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <a th:href="@{'/customer/edit/' + ${customer.customerId}}" class="btn btn-primary">Edit</a>
+                <a th:href="@{/customer}" class="btn btn-secondary">Back to Customer List</a>
+            </div>
+        </div>
+
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+
+        <div class="card">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label th:text="${customer.customerType == 'FOREIGN' ? 'Passport Number' : 'NIC'}">NIC</label>
+                    <span th:text="${customer.nicOrPassport}">198812345678</span>
+                </div>
+                <div class="form-group">
+                    <label>Contact Number</label>
+                    <span th:text="${customer.contactNo}">0712345678</span>
+                </div>
+                <div class="form-group">
+                    <label>Nationality</label>
+                    <span th:text="${customer.nationality}">Sri Lankan</span>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <span th:text="${customer.email != null ? customer.email : '-'}">sunil@gmail.com</span>
+                </div>
+                <div class="form-group">
+                    <label>Address</label>
+                    <span th:text="${customer.address != null ? customer.address : '-'}">Kandy</span>
+                </div>
+                <div class="form-group">
+                    <label>Date of Birth</label>
+                    <span th:text="${customer.dateOfBirth != null ? customer.dateOfBirth : '-'}">1988-04-04</span>
+                </div>
+                <div class="form-group">
+                    <label>Registered Date</label>
+                    <span th:text="${customer.registeredDate}">2026-10-24</span>
+                </div>
+                <div class="form-group">
+                    <label>Discount</label>
+                    <span th:text="${#numbers.formatDecimal(customer.discount, 1, 2)} + '%'">0.00%</span>
+                </div>
+            </div>
+            <!-- Remaining balance will be shown here once Booking and Finance are ready -->
+        </div>
+    </div>
+</body>
+</html>

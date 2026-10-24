@@ -15,6 +15,14 @@
             <a th:href="@{/staff/history}">Staff Logs</a>
         </li>
 
+        <!-- Customer Management: Available for ADMIN and RECEPTIONIST -->
+        <li th:if="${session.loggedInStaff != null}">
+            <a th:href="@{/customer}">Customers</a>
+        </li>
+        <li th:if="${session.loggedInStaff != null}">
+            <a th:href="@{/customer/history}">Customer Logs</a>
+        </li>
+
         <!-- User profile badge & logout -->
         <li th:if="${session.loggedInStaff != null}">
             <span class="user-badge">
