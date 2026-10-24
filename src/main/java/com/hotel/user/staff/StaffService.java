@@ -1,7 +1,7 @@
 package com.hotel.user.staff;
 
-import com.hotel.user.NotFoundException;
-import com.hotel.user.ValidationException;
+import com.hotel.common.NotFoundException;
+import com.hotel.common.ValidationException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;

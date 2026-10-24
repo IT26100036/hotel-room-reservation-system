@@ -1,5 +1,6 @@
 package com.hotel.user;
 
+import com.hotel.common.ValidationException;
 import com.hotel.user.staff.Staff;
 import com.hotel.user.staff.StaffService;
 import jakarta.servlet.http.HttpSession;

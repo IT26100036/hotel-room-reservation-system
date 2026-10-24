@@ -1,4 +1,4 @@
-package com.hotel.user;
+package com.hotel.common;
 
 import java.util.ArrayList;
 import java.util.Collections;

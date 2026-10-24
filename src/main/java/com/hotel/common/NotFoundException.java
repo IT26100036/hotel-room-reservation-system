@@ -1,4 +1,4 @@
-package com.hotel.user;
+package com.hotel.common;
 
 public class NotFoundException extends RuntimeException {
 
