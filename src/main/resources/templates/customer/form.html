@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${isEdit == true ? 'Edit Customer - Hotel Reservation' : 'Register Customer - Hotel Reservation'}">Customer Form</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <div class="container">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title" th:text="${isEdit == true ? 'Edit Customer' : 'Register New Customer'}">Customer Form</h1>
+                <p style="color: var(--text-muted); font-size: 0.9rem;"
+                   th:text="${isEdit == true ? 'Update details for customer ID ' + customer.customerId : 'Register a local or foreign hotel customer'}"></p>
+            </div>
+            <a th:href="@{/customer}" class="btn btn-secondary">Back to Customer List</a>
+        </div>
+
+        <!-- Validation errors -->
+        <div th:if="${errors != null and !errors.isEmpty()}" class="alert alert-danger">
+            <strong>Please correct the following errors:</strong>
+            <ul>
+                <li th:each="err : ${errors}" th:text="${err}">Validation error message</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <form th:action="${isEdit == true} ? @{'/customer/edit/' + ${customer.customerId}} : @{/customer/create}"
+                  th:object="${customer}" method="post">
+                <div class="form-grid">
+                    <!-- Customer ID (edit only) -->
+                    <div class="form-group" th:if="${isEdit == true}">
+                        <label for="customerId">Customer ID</label>
+                        <input type="text" id="customerId" th:field="*{customerId}" class="form-control" readonly style="background-color: #f1f5f9;">
+                    </div>
+
+                    <!-- Customer Type: chosen on create, fixed on edit -->
+                    <div class="form-group">
+                        <label for="customerType">Customer Type *</label>
+                        <select th:if="${isEdit != true}" id="customerType" name="customerType" class="form-control" onchange="toggleType()" required>
+                            <option value="LOCAL" th:selected="${customer.customerType == 'LOCAL'}">LOCAL (Sri Lankan)</option>
+                            <option value="FOREIGN" th:selected="${customer.customerType == 'FOREIGN'}">FOREIGN</option>
+                        </select>
+                        <th:block th:if="${isEdit == true}">
+                            <input type="hidden" id="customerType" name="customerType" th:value="${customer.customerType}">
+                            <input type="text" th:value="${customer.customerType}" class="form-control" readonly style="background-color: #f1f5f9;">
+                            <small style="color: var(--text-muted);">Customer type cannot be changed</small>
+                        </th:block>
+                    </div>
+
+                    <!-- Name -->
+                    <div class="form-group">
+                        <label for="customerName">Full Name * (3-100 letters and spaces)</label>
+                        <input type="text" id="customerName" th:field="*{customerName}" class="form-control" placeholder="e.g. Sunil Fernando" required>
+                    </div>
+
+                    <!-- NIC / Passport -->
+                    <div class="form-group">
+                        <label for="nicOrPassport" id="nicLabel">NIC * (9 digits + V/X or 12 digits)</label>
+                        <input type="text" id="nicOrPassport" th:field="*{nicOrPassport}" class="form-control"
+                               placeholder="e.g. 198812345678" th:readonly="${isEdit == true}"
+                               th:style="${isEdit == true ? 'background-color: #f1f5f9;' : ''}" required>
+                        <small th:if="${isEdit == true}" style="color: var(--text-muted);">NIC / passport cannot be changed</small>
+                    </div>
+
+                    <!-- Contact No -->
+                    <div class="form-group">
+                        <label for="contactNo" id="contactLabel">Contact Number * (10 digits starting with 0)</label>
+                        <input type="text" id="contactNo" th:field="*{contactNo}" class="form-control" placeholder="e.g. 0712345678" required>
+                    </div>
+
+                    <!-- Nationality (foreign only) -->
+                    <div class="form-group" id="nationalityGroup">
+                        <label for="nationality">Nationality * (letters only)</label>
+                        <input type="text" id="nationality" th:field="*{nationality}" class="form-control" placeholder="e.g. British">
+                    </div>
+
+                    <!-- Email -->
+                    <div class="form-group">
+                        <label for="email">Email (Optional)</label>
+                        <input type="email" id="email" th:field="*{email}" class="form-control" placeholder="e.g. sunil@gmail.com">
+                    </div>
+
+                    <!-- Address -->
+                    <div class="form-group">
+                        <label for="address">Address (Optional, max 255 chars)</label>
+                        <input type="text" id="address" th:field="*{address}" class="form-control" placeholder="e.g. Kandy">
+                    </div>
+
+                    <!-- Date of Birth -->
+                    <div class="form-group">
+                        <label for="dateOfBirth">Date of Birth (Optional, must be 18+)</label>
+                        <input type="date" id="dateOfBirth" th:field="*{dateOfBirth}" class="form-control">
+                    </div>
+
+                    <!-- Discount -->
+                    <div class="form-group">
+                        <label for="discount">Discount (%) * (0 to 100)</label>
+                        <input type="number" step="0.01" min="0" max="100" id="discount" th:field="*{discount}" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <a th:href="@{/customer}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary" th:text="${isEdit == true ? 'Update Customer' : 'Register Customer'}">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function toggleType() {
+            const type = document.getElementById("customerType").value;
+            const isForeign = type === 'FOREIGN';
+
+            document.getElementById("nationalityGroup").style.display = isForeign ? 'flex' : 'none';
+            document.getElementById("nicLabel").textContent = isForeign
+                ? 'Passport Number * (6 to 9 letters or digits)'
+                : 'NIC * (9 digits + V/X or 12 digits)';
+            document.getElementById("contactLabel").textContent = isForeign
+                ? 'Contact Number * (7 to 15 digits, may start with +)'
+                : 'Contact Number * (10 digits starting with 0)';
+            document.getElementById("nicOrPassport").placeholder = isForeign ? 'e.g. N1234567' : 'e.g. 198812345678';
+            document.getElementById("contactNo").placeholder = isForeign ? 'e.g. +447911123456' : 'e.g. 0712345678';
+        }
+        document.addEventListener('DOMContentLoaded', toggleType);
+    </script>
+</body>
+</html>
