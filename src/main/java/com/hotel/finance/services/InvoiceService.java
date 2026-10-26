@@ -79,4 +79,41 @@ public class InvoiceService {
         }
         return invoiceRepository.search(keyword);
     }
+
+    /** Changes the charges of an invoice. ID, booking, customer and payments never change here. */
+    public Invoice update(String invoiceId, Invoice form) {
+        // 1. Load the existing invoice
+        Invoice existing = getById(invoiceId);
+
+        // 2. A voided invoice is closed
+        if (existing.getStatus() == InvoiceStatus.VOID) {
+            throw new ValidationException("A void invoice cannot be changed");
+        }
+
+        // 3. Copy only the editable fields
+        existing.setRoomCharge(form.getRoomCharge());
+        existing.setExtraCharges(form.getExtraCharges());
+
+        // 4. Check the rules (this also stops the total going below what is already paid)
+        List<String> errors = existing.validate();
+        if (!errors.isEmpty()) {
+            throw new ValidationException(errors);
+        }
+
+        // 5. UNPAID, PARTIALLY_PAID or PAID from the new balance, then save
+        existing.updateStatus();
+        return invoiceRepository.save(existing);
+    }
+
+    /** Cancels a wrong invoice. It stays in the file but is marked VOID. */
+    public Invoice voidInvoice(String invoiceId) {
+        Invoice existing = getById(invoiceId);
+
+        if (existing.getStatus() == InvoiceStatus.VOID) {
+            throw new ValidationException("This invoice is already void");
+        }
+
+        existing.setStatus(InvoiceStatus.VOID);
+        return invoiceRepository.save(existing);
+    }
 }
