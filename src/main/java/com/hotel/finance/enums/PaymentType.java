@@ -1,4 +1,4 @@
-package com.hotel.finance;
+package com.hotel.finance.enums;
 
 public enum PaymentType {
     ADVANCE,

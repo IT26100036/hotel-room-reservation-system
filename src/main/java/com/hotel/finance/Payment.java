@@ -1,5 +1,8 @@
 package com.hotel.finance;
 
+import com.hotel.finance.enums.PaymentMethod;
+import com.hotel.finance.enums.PaymentType;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
