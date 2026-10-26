@@ -1,5 +1,7 @@
 package com.hotel.finance.services;
 
+import com.hotel.customer.Customer;
+import com.hotel.customer.CustomerService;
 import com.hotel.common.NotFoundException;
 import com.hotel.common.ValidationException;
 import com.hotel.finance.Invoice;
@@ -13,11 +15,12 @@ import java.util.List;
 
 @Service
 public class InvoiceService {
-
     private final InvoiceRepository invoiceRepository;
+    private final CustomerService customerService;
 
-    public InvoiceService(InvoiceRepository invoiceRepository) {
+    public InvoiceService(InvoiceRepository invoiceRepository, CustomerService customerService) {
         this.invoiceRepository = invoiceRepository;
+        this.customerService = customerService;
     }
 
     /** Next ID: finds the highest number and adds 1 -> INV001, INV002... */
@@ -41,11 +44,20 @@ public class InvoiceService {
         invoice.setInvoiceId(generateNextId());
         invoice.setIssuedDate(LocalDate.now());
         invoice.setAmountPaid(0);
-        invoice.setDiscountPercent(0);   // customer discount is added in a later step
         invoice.setStatus(InvoiceStatus.UNPAID);
 
         // 2. Rules of the Invoice class
         List<String> errors = new ArrayList<>(invoice.validate());
+
+        // Customer must exist; their discount is copied onto the invoice
+        if (invoice.getCustomerId() != null && !invoice.getCustomerId().trim().isEmpty()) {
+            try {
+                Customer customer = customerService.getById(invoice.getCustomerId().trim());
+                invoice.setDiscountPercent(customer.getDiscount());
+            } catch (NotFoundException e) {
+                errors.add("Customer not found");
+            }
+        }
 
         // 3. A booking can have only one active (not VOID) invoice
         if (invoice.getBookingId() != null
