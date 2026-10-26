@@ -80,6 +80,7 @@ public class PaymentService {
         }
 
         // 4. Save the payment, then add it to the invoice (this updates the status too)
+        assert invoice != null;
         payment.setInvoiceId(invoice.getInvoiceId());
         paymentRepository.save(payment);
 
