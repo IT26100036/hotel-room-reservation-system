@@ -17,10 +17,12 @@ import java.util.List;
 public class InvoiceService {
     private final InvoiceRepository invoiceRepository;
     private final CustomerService customerService;
+    private final FinanceLog financeLog;
 
-    public InvoiceService(InvoiceRepository invoiceRepository, CustomerService customerService) {
+    public InvoiceService(InvoiceRepository invoiceRepository, CustomerService customerService, FinanceLog financeLog) {
         this.invoiceRepository = invoiceRepository;
         this.customerService = customerService;
+        this.financeLog = financeLog;
     }
 
     /** Next ID: finds the highest number and adds 1 -> INV001, INV002... */
@@ -72,7 +74,10 @@ public class InvoiceService {
         // 4. Clean the IDs and save
         invoice.setBookingId(invoice.getBookingId().trim().toUpperCase());
         invoice.setCustomerId(invoice.getCustomerId().trim().toUpperCase());
-        return invoiceRepository.save(invoice);
+        Invoice saved = invoiceRepository.save(invoice);
+        financeLog.write("CREATE_INVOICE", "Created " + saved.getInvoiceId() + " for booking "
+                + saved.getBookingId() + " (customer " + saved.getCustomerId() + ")");
+        return saved;
     }
 
     public List<Invoice> getAll() {
@@ -114,7 +119,9 @@ public class InvoiceService {
 
         // 5. UNPAID, PARTIALLY_PAID or PAID from the new balance, then save
         existing.updateStatus();
-        return invoiceRepository.save(existing);
+        Invoice saved = invoiceRepository.save(existing);
+        financeLog.write("UPDATE_INVOICE", "Updated charges of " + saved.getInvoiceId());
+        return saved;
     }
 
     /** Cancels a wrong invoice. It stays in the file but is marked VOID. */
@@ -126,6 +133,8 @@ public class InvoiceService {
         }
 
         existing.setStatus(InvoiceStatus.VOID);
-        return invoiceRepository.save(existing);
+        Invoice saved = invoiceRepository.save(existing);
+        financeLog.write("VOID_INVOICE", "Voided " + saved.getInvoiceId());
+        return saved;
     }
 }

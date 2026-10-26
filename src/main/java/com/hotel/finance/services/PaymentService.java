@@ -15,17 +15,18 @@ import java.util.List;
 
 @Service
 public class PaymentService {
-
     private final PaymentRepository paymentRepository;
     private final InvoiceRepository invoiceRepository;
     private final InvoiceService invoiceService;
+    private final FinanceLog financeLog;
 
     public PaymentService(PaymentRepository paymentRepository,
                           InvoiceRepository invoiceRepository,
-                          InvoiceService invoiceService) {
+                          InvoiceService invoiceService, FinanceLog financeLog) {
         this.paymentRepository = paymentRepository;
         this.invoiceRepository = invoiceRepository;
         this.invoiceService = invoiceService;
+        this.financeLog = financeLog;
     }
 
     /** Next ID: finds the highest number and adds 1 -> PAY001, PAY002... */
@@ -87,6 +88,9 @@ public class PaymentService {
         invoice.addPayment(payment.getAmount());
         invoiceRepository.save(invoice);
 
+        financeLog.write("PAYMENT", String.format("%s: %s %s payment of LKR %.2f for %s",
+                payment.getPaymentId(), payment.getPaymentType(), payment.getPaymentMethod(),
+                payment.getAmount(), invoice.getInvoiceId()));
         return payment;
     }
 
