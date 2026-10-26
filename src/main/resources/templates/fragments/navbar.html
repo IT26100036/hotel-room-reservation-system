@@ -2,46 +2,120 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head></head>
 <body>
-<nav th:fragment="navbar" class="navbar">
-    <a class="navbar-brand" th:href="@{/staff}">
-        Hotel <span>Staff Portal</span>
+<!--
+    Sidebar + top bar (design Option A).
+    The fragment is still called "navbar", so every page keeps using
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+-->
+<th:block th:fragment="navbar" th:if="${session.loggedInStaff != null}">
+<aside class="sidebar">
+
+    <!-- Brand -->
+    <a class="sidebar-brand" th:href="@{/staff}">
+        <span class="sidebar-mark">H</span>
+        <span class="sidebar-brand-text">
+            <strong>HOTEL PORTAL</strong>
+            <small>Room Reservation System</small>
+        </span>
     </a>
-    <ul class="navbar-nav">
-        <!-- Staff Management: Available for logged-in staff -->
-        <li th:if="${session.loggedInStaff != null}">
-            <a th:href="@{/staff}">Staff Management</a>
-        </li>
-        <li th:if="${session.loggedInStaff != null and session.loggedInStaff.staffType.name() == 'ADMIN'}">
-            <a th:href="@{/staff/history}">Staff Logs</a>
-        </li>
 
-        <!-- Customer Management: Available for ADMIN and RECEPTIONIST -->
-        <li th:if="${session.loggedInStaff != null}">
-            <a th:href="@{/customer}">Customers</a>
-        </li>
-        <li th:if="${session.loggedInStaff != null}">
-            <a th:href="@{/customer/history}">Customer Logs</a>
-        </li>
+    <nav class="sidebar-nav" aria-label="Main menu">
+        <span class="sidebar-heading">MANAGE</span>
+        <a class="sidebar-link" th:href="@{/staff}" data-path="/staff">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6 8-6s8 2 8 6"></path></svg>
+            STAFF
+        </a>
+        <a class="sidebar-link" th:href="@{/customer}" data-path="/customer">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5"></path><path d="M16 4.5a3.5 3.5 0 0 1 0 7"></path><path d="M18 14.7c2.4.6 4 2.4 4 5.3"></path></svg>
+            CUSTOMERS
+        </a>
+        <a class="sidebar-link" th:href="@{/room}" data-path="/room">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 18v-8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"></path><path d="M3 14h18"></path><path d="M3 18v2M21 18v2"></path><path d="M7 8V6h4v2"></path></svg>
+            ROOMS
+        </a>
 
-        <!-- Room Management: everyone can view, only ADMIN can add/edit/delete -->
-        <li th:if="${session.loggedInStaff != null}">
-            <a th:href="@{/room}">Rooms</a>
-        </li>
-        <li th:if="${session.loggedInStaff != null}">
-            <a th:href="@{/room/history}">Room Logs</a>
-        </li>
+        <span class="sidebar-heading sidebar-heading-gap">RECORDS</span>
+        <!-- Audit dropdown with the history (log) pages -->
+        <details class="sidebar-group">
+            <summary class="sidebar-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1z"></path><path d="M16 5h2a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h2"></path><path d="M9 12h6M9 16h4"></path></svg>
+                <span class="sidebar-grow">AUDIT</span>
+                <svg class="sidebar-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+            </summary>
+            <div class="sidebar-sublinks">
+                <!-- Staff logs: ADMIN only -->
+                <a class="sidebar-sublink" th:href="@{/staff/history}" data-path="/staff/history"
+                   th:if="${session.loggedInStaff.staffType.name() == 'ADMIN'}">STAFF</a>
+                <a class="sidebar-sublink" th:href="@{/customer/history}" data-path="/customer/history">CUSTOMERS</a>
+                <a class="sidebar-sublink" th:href="@{/room/history}" data-path="/room/history">ROOMS</a>
+            </div>
+        </details>
+    </nav>
 
-        <!-- User profile badge & logout -->
-        <li th:if="${session.loggedInStaff != null}">
-            <span class="user-badge">
-                <strong th:text="${session.loggedInStaff.name}">Staff Member</strong>
-                (<span th:text="${session.loggedInStaff.staffType}">ROLE</span>)
-            </span>
-        </li>
-        <li th:if="${session.loggedInStaff != null}">
-            <a th:href="@{/logout}" class="btn-logout">Logout</a>
-        </li>
-    </ul>
-</nav>
+    <!-- Logged-in staff member and logout -->
+    <div class="sidebar-user"
+         th:with="parts=${#strings.arraySplit(session.loggedInStaff.name, ' ')}">
+        <span class="sidebar-avatar"
+              th:text="${#strings.toUpperCase(#strings.substring(parts[0], 0, 1) + (parts.length > 1 ? #strings.substring(parts[1], 0, 1) : ''))}">SA</span>
+        <span class="sidebar-user-text">
+            <strong th:text="${session.loggedInStaff.name}">System Admin</strong>
+            <small th:text="${#strings.capitalize(#strings.toLowerCase(session.loggedInStaff.staffType.name()))}">Admin</small>
+        </span>
+        <a th:href="@{/logout}" class="sidebar-logout" aria-label="Log out" title="Log out">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg>
+        </a>
+    </div>
+</aside>
+
+<!-- Top bar: "Manage > Rooms" on the left, date and time on the right -->
+<header class="topbar">
+    <div class="topbar-path">
+        <span class="topbar-section" id="topbarSection">Manage</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+        <h2 class="topbar-title" id="topbarTitle">Hotel Portal</h2>
+    </div>
+    <div class="topbar-clock">
+        <span id="topbarDate"></span>
+        <span id="topbarTime"></span>
+    </div>
+</header>
+
+<script>
+    (function () {
+        // 1. Highlight the link of the open page (the longest matching path wins)
+        var path = window.location.pathname;
+        var best = null;
+        document.querySelectorAll('.sidebar [data-path]').forEach(function (link) {
+            var p = link.getAttribute('data-path');
+            if (path === p || path.indexOf(p + '/') === 0) {
+                if (!best || p.length > best.getAttribute('data-path').length) best = link;
+            }
+        });
+        if (best) {
+            best.classList.add('active');
+            var group = best.closest('details');
+            if (group) group.open = true;   // keep Audit open on a log page
+        }
+
+        // 2. Top bar title from the page <title>: "Room Management - Hotel ..." becomes "Room"
+        var title = document.title.split(' - ')[0].replace(/\s*Management$/i, '');
+        if (title) document.getElementById('topbarTitle').textContent = title;
+        if (path.indexOf('/history') !== -1) document.getElementById('topbarSection').textContent = 'Audit';
+
+        // 3. Date and time, updated every 30 seconds
+        function tick() {
+            var now = new Date();
+            document.getElementById('topbarDate').textContent = now.toLocaleDateString('en-GB', {
+                weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
+            });
+            document.getElementById('topbarTime').textContent = now.toLocaleTimeString('en-US', {
+                hour: '2-digit', minute: '2-digit'
+            });
+        }
+        tick();
+        setInterval(tick, 30000);
+    })();
+</script>
+</th:block>
 </body>
 </html>
