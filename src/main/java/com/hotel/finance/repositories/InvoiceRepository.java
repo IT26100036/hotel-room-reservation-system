@@ -1,5 +1,6 @@
-package com.hotel.finance;
+package com.hotel.finance.repositories;
 
+import com.hotel.finance.Invoice;
 import com.hotel.finance.enums.InvoiceStatus;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;

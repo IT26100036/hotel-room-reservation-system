@@ -1,5 +1,6 @@
-package com.hotel.finance;
+package com.hotel.finance.repositories;
 
+import com.hotel.finance.Payment;
 import com.hotel.finance.enums.PaymentMethod;
 import com.hotel.finance.enums.PaymentType;
 import com.hotel.finance.methods.Card;
