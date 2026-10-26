@@ -23,6 +23,14 @@
             <a th:href="@{/customer/history}">Customer Logs</a>
         </li>
 
+        <!-- Room Management: everyone can view, only ADMIN can add/edit/delete -->
+        <li th:if="${session.loggedInStaff != null}">
+            <a th:href="@{/room}">Rooms</a>
+        </li>
+        <li th:if="${session.loggedInStaff != null}">
+            <a th:href="@{/room/history}">Room Logs</a>
+        </li>
+
         <!-- User profile badge & logout -->
         <li th:if="${session.loggedInStaff != null}">
             <span class="user-badge">

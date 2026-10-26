@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${isEdit == true ? 'Edit Room - Hotel Reservation' : 'Add Room - Hotel Reservation'}">Room Form</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title" th:text="${isEdit == true ? 'Edit Room' : 'Add New Room'}">Room Form</h1>
+            <p style="color: var(--text-muted); font-size: 0.9rem;"
+               th:text="${isEdit == true ? 'Update details for room ID ' + room.roomId : 'Add a single, double or suite room'}"></p>
+        </div>
+        <a th:href="@{/room}" class="btn btn-secondary">Back to Room List</a>
+    </div>
+
+    <!-- Validation errors -->
+    <div th:if="${errors != null and !errors.isEmpty()}" class="alert alert-danger">
+        <strong>Please correct the following errors:</strong>
+        <ul>
+            <li th:each="err : ${errors}" th:text="${err}">Validation error message</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <form th:action="${isEdit == true} ? @{'/room/edit/' + ${room.roomId}} : @{/room/create}"
+              th:object="${room}" method="post">
+            <div class="form-grid">
+                <!-- Room ID (edit only) -->
+                <div class="form-group" th:if="${isEdit == true}">
+                    <label for="roomId">Room ID</label>
+                    <input type="text" id="roomId" th:field="*{roomId}" class="form-control" readonly style="background-color: #f1f5f9;">
+                </div>
+
+                <!-- Room Type: chosen on create, fixed on edit -->
+                <div class="form-group">
+                    <label for="roomType">Room Type *</label>
+                    <select th:if="${isEdit != true}" id="roomType" name="roomType" class="form-control" onchange="showMaxCapacity()" required>
+                        <option th:each="t : ${roomTypes}" th:value="${t}" th:text="${t}"
+                                th:selected="${t == room.roomType}">SINGLE</option>
+                    </select>
+                    <th:block th:if="${isEdit == true}">
+                        <input type="hidden" name="roomType" th:value="${room.roomType}">
+                        <input type="text" id="roomType" th:value="${room.roomType}" class="form-control" readonly style="background-color: #f1f5f9;">
+                        <small style="color: var(--text-muted);">Room type cannot be changed</small>
+                    </th:block>
+                </div>
+
+                <!-- Room Number: chosen on create, fixed on edit -->
+                <div class="form-group">
+                    <label for="roomNumber">Room Number * (3 or 4 digits)</label>
+                    <input type="text" id="roomNumber" th:field="*{roomNumber}" class="form-control" placeholder="e.g. 101"
+                           th:readonly="${isEdit == true}" th:style="${isEdit == true} ? 'background-color: #f1f5f9;' : ''" required>
+                    <small th:if="${isEdit == true}" style="color: var(--text-muted);">Room number cannot be changed</small>
+                </div>
+
+                <!-- Floor -->
+                <div class="form-group">
+                    <label for="floor">Floor * (0 to 50)</label>
+                    <input type="number" min="0" max="50" id="floor" th:field="*{floor}" class="form-control" required>
+                </div>
+
+                <!-- Capacity -->
+                <div class="form-group">
+                    <label for="capacity" id="capacityLabel">Capacity *</label>
+                    <input type="number" min="1" id="capacity" th:field="*{capacity}" class="form-control" required>
+                </div>
+
+                <!-- Price per night -->
+                <div class="form-group">
+                    <label for="pricePerNight">Price per Night (LKR) * (more than 0)</label>
+                    <input type="number" step="0.01" min="0" id="pricePerNight" th:field="*{pricePerNight}" class="form-control" required>
+                </div>
+
+                <!-- Status: AVAILABLE on create, editable on edit -->
+                <div class="form-group" th:if="${isEdit == true}">
+                    <label for="status">Status *</label>
+                    <select id="status" th:field="*{status}" class="form-control" required>
+                        <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}">AVAILABLE</option>
+                    </select>
+                </div>
+
+                <!-- Description -->
+                <div class="form-group">
+                    <label for="description">Description (Optional, max 255 chars)</label>
+                    <input type="text" id="description" th:field="*{description}" class="form-control" maxlength="255" placeholder="e.g. Sea view with balcony">
+                </div>
+
+                <!-- Air conditioning -->
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" th:field="*{hasAirConditioning}">
+                        Has Air Conditioning
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <a th:href="@{/room}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary" th:text="${isEdit == true ? 'Update Room' : 'Add Room'}">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    // Max people for each room type (same as getMaxCapacity() in the Java classes)
+    const MAX_CAPACITY = { SINGLE: 1, DOUBLE: 2, SUITE: 4 };
+
+    function showMaxCapacity() {
+        const type = document.getElementById("roomType").value;
+        const max = MAX_CAPACITY[type];
+        document.getElementById("capacityLabel").textContent = 'Capacity * (1 to ' + max + ')';
+        document.getElementById("capacity").max = max;
+    }
+    document.addEventListener('DOMContentLoaded', showMaxCapacity);
+</script>
+</body>
+</html>

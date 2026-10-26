@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room Management - Hotel Reservation System</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container" th:with="isAdmin=${session.loggedInStaff != null and session.loggedInStaff.staffType.name() == 'ADMIN'}">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Rooms</h1>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Single, double and suite rooms of the hotel</p>
+        </div>
+        <a th:if="${isAdmin}" th:href="@{/room/create}" class="btn btn-primary">+ Add Room</a>
+    </div>
+
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+    <div class="card">
+        <!-- Search by room number -->
+        <form th:action="@{/room}" method="get" class="search-bar">
+            <input type="text" name="keyword" th:value="${keyword}"
+                   class="search-input" placeholder="Search by room number...">
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a th:if="${(keyword != null and keyword != '') or selectedStatus != null or selectedType != null}"
+               th:href="@{/room}" class="btn btn-secondary">Clear</a>
+        </form>
+
+        <!-- Filter by status or type -->
+        <form th:action="@{/room}" method="get" class="search-bar">
+            <select name="status" class="search-input" onchange="this.form.submit()">
+                <option value="">All statuses</option>
+                <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}"
+                        th:selected="${s == selectedStatus}">AVAILABLE</option>
+            </select>
+        </form>
+        <form th:action="@{/room}" method="get" class="search-bar">
+            <select name="type" class="search-input" onchange="this.form.submit()">
+                <option value="">All room types</option>
+                <option th:each="t : ${roomTypes}" th:value="${t}" th:text="${t}"
+                        th:selected="${t == selectedType}">SINGLE</option>
+            </select>
+        </form>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                <tr>
+                    <th>Room ID</th>
+                    <th>Room No</th>
+                    <th>Type</th>
+                    <th>Floor</th>
+                    <th>Capacity</th>
+                    <th>Price / Night (LKR)</th>
+                    <th>AC</th>
+                    <th>Status</th>
+                    <th>Description</th>
+                    <th th:if="${isAdmin}">Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(roomList)}">
+                    <td colspan="10" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                        No rooms found.
+                    </td>
+                </tr>
+                <tr th:each="r : ${roomList}">
+                    <td><strong th:text="${r.roomId}">R001</strong></td>
+                    <td th:text="${r.roomNumber}">101</td>
+                    <td><span class="role-badge" th:text="${r.roomType}">SINGLE</span></td>
+                    <td th:text="${r.floor}">1</td>
+                    <td th:text="${r.capacity}">1</td>
+                    <td th:text="${#numbers.formatDecimal(r.pricePerNight, 1, 'COMMA', 2, 'POINT')}">8,000.00</td>
+                    <td th:text="${r.hasAirConditioning ? 'Yes' : 'No'}">Yes</td>
+                    <td>
+                                <span class="status-badge"
+                                      th:classappend="${r.status != null and r.status.name() == 'AVAILABLE'} ? 'status-active' : 'status-inactive'"
+                                      th:text="${r.status}">AVAILABLE</span>
+                    </td>
+                    <td th:text="${r.description}">Garden view</td>
+                    <td th:if="${isAdmin}">
+                        <div style="display: flex; gap: 0.5rem;">
+                            <a th:href="@{'/room/edit/' + ${r.roomId}}" class="btn btn-secondary btn-sm">Edit</a>
+                            <form th:action="@{'/room/delete/' + ${r.roomId}}" method="post"
+                                  onsubmit="return confirm('Are you sure you want to delete this room?');">
+                                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>
