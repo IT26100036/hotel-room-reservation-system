@@ -32,10 +32,13 @@ public class LoginInterceptor implements HandlerInterceptor {
             return false;
         }
 
-        // Creating, editing and deleting staff is only for ADMIN
+        // Creating, editing and deleting staff and rooms is only for ADMIN
         boolean isAdminMutation = path.startsWith("/staff/create")
                 || path.startsWith("/staff/edit")
-                || path.startsWith("/staff/delete");
+                || path.startsWith("/staff/delete")
+                || path.startsWith("/room/create")
+                || path.startsWith("/room/edit")
+                || path.startsWith("/room/delete");
 
         if (isAdminMutation && loggedInStaff.getStaffType() != StaffType.ADMIN) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
