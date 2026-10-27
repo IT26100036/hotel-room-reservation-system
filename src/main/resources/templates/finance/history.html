@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance History Logs - Hotel Reservation</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Finance activity</h1>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Every invoice and payment change, newest first</p>
+        </div>
+        <a th:href="@{/finance}" class="btn btn-secondary">Back to invoices</a>
+    </div>
+
+    <div class="card">
+        <div th:if="${#lists.isEmpty(logs)}" class="no-history">
+            <p>No history yet</p>
+        </div>
+
+        <div class="table-responsive" th:if="${!#lists.isEmpty(logs)}">
+            <table>
+                <thead>
+                <tr>
+                    <th style="width: 160px;">When</th>
+                    <th style="width: 170px;">Action</th>
+                    <th style="width: 90px;">By</th>
+                    <th>Details</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- Each line is "time | ACTION | staff ID | details" -->
+                <tr th:each="log : ${logs}" th:with="parts=${#strings.arraySplit(log, '|')}">
+                    <th:block th:if="${parts.length >= 4}">
+                        <td style="color: var(--text-muted); white-space: nowrap;" th:text="${#strings.trim(parts[0])}">2026-10-27 19:16</td>
+                        <td>
+                            <span class="log-badge"
+                                  th:classappend="${'log-' + #strings.toLowerCase(#strings.trim(parts[1]))}"
+                                  th:text="${#strings.replace(#strings.trim(parts[1]), '_', ' ')}">PAYMENT</span>
+                        </td>
+                        <td style="font-weight: 600;" th:text="${#strings.trim(parts[2])}">S001</td>
+                        <td th:text="${#strings.trim(parts[3])}">PAY001: ADVANCE CASH payment of LKR 5000.00 for INV001</td>
+                    </th:block>
+                    <td th:if="${parts.length < 4}" colspan="4" th:text="${log}">a line in another format</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>
