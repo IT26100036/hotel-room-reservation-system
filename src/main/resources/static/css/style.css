@@ -734,3 +734,73 @@ label {
     text-align: right;
     font-variant-numeric: tabular-nums;
 }
+
+/* Form on the left, help panel on the right */
+.page-split {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+.page-split-main {
+    flex: 2 1 480px;
+    min-width: 0;
+}
+
+.page-split-side {
+    flex: 1 1 260px;
+    min-width: 0;
+}
+
+.section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--secondary);
+    margin-bottom: 1rem;
+}
+
+.section-title-gap {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+}
+
+.field-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* Lines of a bill: label on the left, amount on the right */
+.bill-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.4rem 0;
+    font-size: 0.9rem;
+}
+
+.bill-row span:first-child {
+    color: var(--text-muted);
+}
+
+.bill-total {
+    border-top: 1px solid var(--border);
+    margin-top: 0.4rem;
+    padding-top: 0.75rem;
+    font-weight: 700;
+}
+
+.bill-total span:first-child {
+    color: var(--text-main);
+}
+
+.info-note {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    border-radius: var(--radius);
+    background: var(--primary-light);
+    color: #1e40af;
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
