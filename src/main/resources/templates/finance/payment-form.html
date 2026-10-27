@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Record Payment - Hotel Reservation</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container" th:with="method=${payment.paymentMethod.name()}">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Record payment</h1>
+            <p class="page-meta" th:if="${invoice != null}"
+               th:text="${'For invoice ' + invoice.invoiceId + ' · Booking ' + invoice.bookingId + ' · Customer ' + invoice.customerId}">
+                For invoice INV001 · Booking B001 · Customer C001
+            </p>
+        </div>
+        <a th:if="${invoice != null}" th:href="@{'/finance/invoice/view/' + ${invoice.invoiceId}}" class="btn btn-secondary">Back to invoice</a>
+        <a th:if="${invoice == null}" th:href="@{/finance}" class="btn btn-secondary">Back to invoices</a>
+    </div>
+
+    <!-- Validation errors -->
+    <div th:if="${errors != null and !errors.isEmpty()}" class="alert alert-danger">
+        <strong>Please correct the following errors:</strong>
+        <ul>
+            <li th:each="err : ${errors}" th:text="${err}">Amount cannot be more than the balance</li>
+        </ul>
+    </div>
+
+    <div class="page-split">
+        <!-- Form -->
+        <div class="card page-split-main">
+            <div class="section-title">Payment method</div>
+
+            <!-- Clicking a tile reloads the form for that method -->
+            <div class="method-picker">
+                <a th:each="m : ${paymentMethods}"
+                   th:href="@{/finance/payment/create(invoiceId=${payment.invoiceId}, paymentMethod=${m})}"
+                   class="method-option" th:classappend="${m.name() == method} ? 'selected' : ''">
+                    <span class="method-dot"></span>
+                    <span th:text="${m.name() == 'ONLINE' ? 'Online transfer' : #strings.capitalize(#strings.toLowerCase(m.name()))}">Cash</span>
+                </a>
+            </div>
+
+            <form th:action="@{/finance/payment/create}" th:object="${payment}" method="post">
+                <input type="hidden" name="paymentMethod" th:value="${method}">
+                <input type="hidden" th:field="*{invoiceId}">
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="paymentType">Payment type *</label>
+                        <select id="paymentType" th:field="*{paymentType}" class="form-control" required>
+                            <option th:each="t : ${paymentTypes}" th:value="${t}" th:text="${t}">ADVANCE</option>
+                        </select>
+                        <small class="field-hint">Advance at booking, final at check-out</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="amount">Amount (LKR) *</label>
+                        <input type="number" step="0.01" min="0.01" id="amount" th:field="*{amount}" class="form-control"
+                               oninput="updateChange()" required>
+                        <small class="field-hint" th:if="${invoice != null}"
+                               th:text="${'Up to the balance, LKR ' + #numbers.formatDecimal(invoice.balance, 1, 'COMMA', 2, 'POINT')}">Up to the balance</small>
+                    </div>
+                </div>
+
+                <!-- Only the chosen method's fields -->
+                <div class="method-details">
+                    <div class="method-details-title"
+                         th:text="${method == 'ONLINE' ? 'ONLINE TRANSFER DETAILS' : method + ' DETAILS'}">CASH DETAILS</div>
+
+                    <div class="form-grid" th:if="${method == 'CASH'}">
+                        <div class="form-group">
+                            <label for="amountReceived">Cash received (LKR) *</label>
+                            <input type="number" step="0.01" min="0" id="amountReceived" th:field="*{amountReceived}"
+                                   class="form-control" oninput="updateChange()" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Change to give</label>
+                            <span class="change-box" id="changeBox">LKR 0.00</span>
+                        </div>
+                    </div>
+
+                    <div class="form-grid" th:if="${method == 'CARD'}">
+                        <div class="form-group">
+                            <label for="cardHolderName">Card holder name *</label>
+                            <input type="text" id="cardHolderName" th:field="*{cardHolderName}" class="form-control"
+                                   placeholder="e.g. Nimali Perera" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="cardLastFour">Last 4 digits of card *</label>
+                            <input type="text" id="cardLastFour" th:field="*{cardLastFour}" class="form-control"
+                                   placeholder="e.g. 4821" maxlength="4" pattern="[0-9]{4}" required>
+                            <small class="field-hint">The full card number is never stored</small>
+                        </div>
+                    </div>
+
+                    <div class="form-grid" th:if="${method == 'ONLINE'}">
+                        <div class="form-group">
+                            <label for="referenceNo">Reference number *</label>
+                            <input type="text" id="referenceNo" th:field="*{referenceNo}" class="form-control"
+                                   placeholder="e.g. TRX88213409" required>
+                            <small class="field-hint">6 to 20 letters or digits from the bank transfer</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <a th:href="${invoice != null} ? @{'/finance/invoice/view/' + ${invoice.invoiceId}} : @{/finance}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Record payment</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Invoice summary -->
+        <div class="card page-split-side" th:if="${invoice != null}">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+                <span class="section-title" style="margin: 0;" th:text="${invoice.invoiceId}">INV001</span>
+                <span class="invoice-badge"
+                      th:classappend="${'invoice-' + #strings.toLowerCase(invoice.status.name())}"
+                      th:text="${#strings.replace(invoice.status.name(), '_', ' ')}">UNPAID</span>
+            </div>
+            <div class="bill-row"><span>Total</span><span class="money" th:text="${#numbers.formatDecimal(invoice.total, 1, 'COMMA', 2, 'POINT')}">16,000.00</span></div>
+            <div class="bill-row"><span>Paid so far</span><span class="money" th:text="${#numbers.formatDecimal(invoice.amountPaid, 1, 'COMMA', 2, 'POINT')}">0.00</span></div>
+            <div class="balance-due">
+                <span>Balance due</span>
+                <strong th:text="${'LKR ' + #numbers.formatDecimal(invoice.balance, 1, 'COMMA', 2, 'POINT')}">LKR 16,000.00</strong>
+            </div>
+            <p class="info-note">When the balance reaches 0 the invoice becomes PAID automatically.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Cash only: shows the change as the amounts are typed
+    function updateChange() {
+        const received = document.getElementById("amountReceived");
+        const box = document.getElementById("changeBox");
+        if (!received || !box) {
+            return;   // not a cash payment
+        }
+        const amount = parseFloat(document.getElementById("amount").value) || 0;
+        const change = (parseFloat(received.value) || 0) - amount;
+        box.textContent = change >= 0 ? "LKR " + change.toFixed(2) : "Not enough cash";
+    }
+    document.addEventListener("DOMContentLoaded", updateChange);
+</script>
+</body>
+</html>
