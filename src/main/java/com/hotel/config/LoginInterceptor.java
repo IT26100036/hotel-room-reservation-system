@@ -38,7 +38,8 @@ public class LoginInterceptor implements HandlerInterceptor {
                 || path.startsWith("/staff/delete")
                 || path.startsWith("/room/create")
                 || path.startsWith("/room/edit")
-                || path.startsWith("/room/delete");
+                || path.startsWith("/room/delete")
+                || path.startsWith("/finance/invoice/void");
 
         if (isAdminMutation && loggedInStaff.getStaffType() != StaffType.ADMIN) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);

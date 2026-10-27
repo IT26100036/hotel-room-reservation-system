@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Details - Hotel Reservation</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container"
+     th:with="st=${invoice.status.name()},
+              isAdmin=${session.loggedInStaff != null and session.loggedInStaff.staffType.name() == 'ADMIN'}">
+
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+    <div class="page-header">
+        <div>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <h1 class="page-title" th:text="${invoice.invoiceId}">INV001</h1>
+                <span class="invoice-badge"
+                      th:classappend="${'invoice-' + #strings.toLowerCase(st)}"
+                      th:text="${#strings.replace(st, '_', ' ')}">UNPAID</span>
+            </div>
+            <p class="page-meta"
+               th:text="${'Booking ' + invoice.bookingId + ' · Customer ' + invoice.customerId + ' · Issued ' + invoice.issuedDate}">
+                Booking B001 · Customer C001 · Issued 2026-10-27
+            </p>
+        </div>
+        <div class="header-actions">
+            <a th:href="@{/finance}" class="btn btn-secondary">Back to invoices</a>
+            <a th:if="${st != 'VOID'}" th:href="@{'/finance/invoice/edit/' + ${invoice.invoiceId}}" class="btn btn-secondary">Edit charges</a>
+            <form th:if="${st != 'VOID' and isAdmin}" th:action="@{'/finance/invoice/void/' + ${invoice.invoiceId}}" method="post"
+                  onsubmit="return confirm('Void this invoice? This cannot be undone.');">
+                <button type="submit" class="btn btn-danger">Void invoice</button>
+            </form>
+            <a th:if="${st == 'UNPAID' or st == 'PARTIALLY_PAID'}"
+               th:href="@{/finance/payment/create(invoiceId=${invoice.invoiceId})}" class="btn btn-primary">+ Record payment</a>
+        </div>
+    </div>
+
+    <div class="page-split">
+        <!-- Bill -->
+        <div class="card page-split-side">
+            <div class="section-title">Bill</div>
+            <div class="bill-row"><span>Room charge</span><span class="money" th:text="${#numbers.formatDecimal(invoice.roomCharge, 1, 'COMMA', 2, 'POINT')}">16,000.00</span></div>
+            <div class="bill-row"><span>Extra charges</span><span class="money" th:text="${#numbers.formatDecimal(invoice.extraCharges, 1, 'COMMA', 2, 'POINT')}">0.00</span></div>
+            <div class="bill-row"><span>Subtotal</span><span class="money" th:text="${#numbers.formatDecimal(invoice.subtotal, 1, 'COMMA', 2, 'POINT')}">16,000.00</span></div>
+            <div class="bill-row">
+                <span th:text="${'Customer discount (' + #numbers.formatDecimal(invoice.discountPercent, 1, 0) + '%)'}">Customer discount (0%)</span>
+                <span class="money discount" th:text="${'- ' + #numbers.formatDecimal(invoice.discountAmount, 1, 'COMMA', 2, 'POINT')}">- 0.00</span>
+            </div>
+            <div class="bill-row bill-total"><span>Total</span><span class="money" th:text="${'LKR ' + #numbers.formatDecimal(invoice.total, 1, 'COMMA', 2, 'POINT')}">LKR 16,000.00</span></div>
+            <div class="bill-row"><span>Paid</span><span class="money" th:text="${#numbers.formatDecimal(invoice.amountPaid, 1, 'COMMA', 2, 'POINT')}">0.00</span></div>
+
+            <div th:if="${st != 'VOID'}" class="balance-due" th:classappend="${invoice.balance <= 0} ? 'balance-clear' : ''">
+                <span th:text="${invoice.balance <= 0 ? 'Fully paid' : 'Balance due'}">Balance due</span>
+                <strong th:text="${'LKR ' + #numbers.formatDecimal(invoice.balance, 1, 'COMMA', 2, 'POINT')}">LKR 16,000.00</strong>
+            </div>
+            <p th:if="${st == 'VOID'}" class="info-note">This invoice is void. It is kept for the records and cannot be paid or changed.</p>
+        </div>
+
+        <!-- Payments -->
+        <div class="card page-split-main">
+            <div class="section-title">Payments</div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Payment</th>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Method</th>
+                        <th>Details</th>
+                        <th class="money">Amount</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(payments)}">
+                        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+                            No payments yet.
+                        </td>
+                    </tr>
+                    <tr th:each="p : ${payments}">
+                        <td><strong th:text="${p.paymentId}">PAY001</strong></td>
+                        <td style="color: var(--text-muted);" th:text="${p.paymentDate}">2026-10-27</td>
+                        <td><span class="role-badge" th:text="${p.paymentType}">ADVANCE</span></td>
+                        <td th:text="${p.paymentMethod}">CASH</td>
+                        <td style="color: var(--text-muted);">
+                            <th:block th:if="${p.paymentMethod.name() == 'CASH'}"
+                                      th:text="${'Received ' + #numbers.formatDecimal(p.amountReceived, 1, 'COMMA', 2, 'POINT') + ' · change ' + #numbers.formatDecimal(p.change, 1, 'COMMA', 2, 'POINT')}">Received 5,000.00 · change 0.00</th:block>
+                            <th:block th:if="${p.paymentMethod.name() == 'CARD'}"
+                                      th:text="${p.cardHolderName + ' · **** ' + p.cardLastFour}">Nimali Perera · **** 4821</th:block>
+                            <th:block th:if="${p.paymentMethod.name() == 'ONLINE'}"
+                                      th:text="${'Ref ' + p.referenceNo}">Ref TRX88213409</th:block>
+                        </td>
+                        <td class="money" style="font-weight: 600;" th:text="${#numbers.formatDecimal(p.amount, 1, 'COMMA', 2, 'POINT')}">5,000.00</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

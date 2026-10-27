@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${isEdit == true ? 'Edit Invoice - Hotel Reservation' : 'New Invoice - Hotel Reservation'}">Invoice Form</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title" th:text="${isEdit == true ? 'Edit invoice ' + invoice.invoiceId : 'New invoice'}">New invoice</h1>
+            <p style="color: var(--text-muted); font-size: 0.9rem;"
+               th:text="${isEdit == true ? 'Change the room charge or extra charges' : 'Create the bill for a booking. The customer''s discount is added automatically.'}"></p>
+        </div>
+        <a th:href="${isEdit == true} ? @{'/finance/invoice/view/' + ${invoice.invoiceId}} : @{/finance}"
+           class="btn btn-secondary" th:text="${isEdit == true ? 'Back to invoice' : 'Back to invoices'}">Back</a>
+    </div>
+
+    <!-- Validation errors -->
+    <div th:if="${errors != null and !errors.isEmpty()}" class="alert alert-danger">
+        <strong>Please correct the following errors:</strong>
+        <ul>
+            <li th:each="err : ${errors}" th:text="${err}">Customer not found</li>
+        </ul>
+    </div>
+
+    <div class="page-split">
+        <!-- Form -->
+        <div class="card page-split-main">
+            <form th:action="${isEdit == true} ? @{'/finance/invoice/edit/' + ${invoice.invoiceId}} : @{/finance/invoice/create}"
+                  th:object="${invoice}" method="post">
+
+                <div class="section-title">Booking and customer</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="bookingId">Booking ID *</label>
+                        <input type="text" id="bookingId" th:field="*{bookingId}" class="form-control"
+                               placeholder="e.g. B001" th:readonly="${isEdit == true}"
+                               th:style="${isEdit == true} ? 'background-color: #f1f5f9;' : ''" required>
+                        <small class="field-hint" th:text="${isEdit == true ? 'Booking cannot be changed' : 'One active invoice per booking'}"></small>
+                    </div>
+                    <div class="form-group">
+                        <label for="customerId">Customer ID *</label>
+                        <input type="text" id="customerId" th:field="*{customerId}" class="form-control"
+                               placeholder="e.g. C001" th:readonly="${isEdit == true}"
+                               th:style="${isEdit == true} ? 'background-color: #f1f5f9;' : ''" required>
+                        <small class="field-hint" th:text="${isEdit == true ? 'Customer cannot be changed' : 'Must be a registered customer'}"></small>
+                    </div>
+                </div>
+
+                <div class="section-title section-title-gap">Charges</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="roomCharge">Room charge (LKR) *</label>
+                        <input type="number" step="0.01" min="0" id="roomCharge" name="roomCharge" class="form-control"
+                               th:value="${invoice.roomCharge > 0 ? invoice.roomCharge : ''}" placeholder="e.g. 16000" required>
+                        <small class="field-hint">Nights x room price, more than 0</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="extraCharges">Extra charges (LKR)</label>
+                        <input type="number" step="0.01" min="0" id="extraCharges" th:field="*{extraCharges}" class="form-control">
+                        <small class="field-hint">Food, laundry, damages... 0 if none</small>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <a th:href="${isEdit == true} ? @{'/finance/invoice/view/' + ${invoice.invoiceId}} : @{/finance}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary" th:text="${isEdit == true ? 'Save changes' : 'Create invoice'}">Create invoice</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- How the total is worked out -->
+        <div class="card page-split-side">
+            <div class="section-title">How the total is worked out</div>
+            <div class="bill-row"><span>Room charge</span><span>+ room charge</span></div>
+            <div class="bill-row"><span>Extra charges</span><span>+ extra charges</span></div>
+            <div class="bill-row"><span>Customer discount</span><span>- discount %</span></div>
+            <div class="bill-row bill-total"><span>Total</span><span>to pay</span></div>
+            <p class="info-note" th:if="${isEdit != true}">
+                The invoice starts as UNPAID. Record the advance and final payments from the invoice page.
+            </p>
+            <p class="info-note" th:if="${isEdit == true}">
+                The status is worked out again after saving. The total cannot go below what has already been paid.
+            </p>
+        </div>
+    </div>
+</div>
+</body>
+</html>
