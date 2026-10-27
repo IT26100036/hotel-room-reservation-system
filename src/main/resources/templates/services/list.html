@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Services Management - Hotel Reservation System</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Hotel Services</h1>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Food, laundry and transport requests from guests</p>
+        </div>
+        <a th:href="@{/services/create}" class="btn btn-primary">+ New Request</a>
+    </div>
+
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+    <div class="card">
+        <!-- Search by request ID, customer ID or service type -->
+        <form th:action="@{/services}" method="get" class="search-bar">
+            <input type="text" name="keyword" th:value="${keyword}"
+                   class="search-input" placeholder="Search by request ID, customer ID or type (food, laundry, transport)...">
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a th:if="${(keyword != null and keyword != '') or selectedStatus != null}"
+               th:href="@{/services}" class="btn btn-secondary">Clear</a>
+        </form>
+
+        <!-- Filter by status -->
+        <form th:action="@{/services}" method="get" class="search-bar">
+            <select name="status" class="search-input" onchange="this.form.submit()">
+                <option value="">All statuses</option>
+                <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}"
+                        th:selected="${s == selectedStatus}">REQUESTED</option>
+            </select>
+        </form>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                <tr>
+                    <th>Request ID</th>
+                    <th>Type</th>
+                    <th>Customer</th>
+                    <th>Details</th>
+                    <th>Charge (LKR)</th>
+                    <th>Requested</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(requestList)}">
+                    <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                        No service requests found.
+                    </td>
+                </tr>
+                <tr th:each="r : ${requestList}">
+                    <td><strong th:text="${r.requestId}">SR001</strong></td>
+                    <td><span class="role-badge" th:text="${r.serviceType}">FOOD</span></td>
+                    <td th:text="${r.customerId}">C001</td>
+                    <td th:text="${r.summary}">2 x Fried rice</td>
+                    <td th:text="${#numbers.formatDecimal(r.calculateCharge(), 1, 'COMMA', 2, 'POINT')}">2,400.00</td>
+                    <td th:text="${r.requestDate}">2026-10-27</td>
+                    <td>
+                        <span th:class="${r.status.name() == 'COMPLETED'} ? 'status-badge status-active'
+                                     : (${r.status.name() == 'CANCELLED'} ? 'status-badge status-inactive' : 'role-badge')"
+                              th:text="${r.status}">REQUESTED</span>
+                    </td>
+                    <td>
+                        <a th:href="@{'/services/view/' + ${r.requestId}}" class="btn btn-primary btn-sm">View</a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>

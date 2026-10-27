@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${isEdit == true ? 'Edit Service Request - Hotel Reservation' : 'New Service Request - Hotel Reservation'}">Service Request Form</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container" th:with="type=${serviceRequest.serviceType.name()}">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title" th:text="${isEdit == true ? 'Edit Service Request' : 'New Service Request'}">Service Request Form</h1>
+            <p style="color: var(--text-muted); font-size: 0.9rem;"
+               th:text="${isEdit == true ? 'Change the details of request ' + serviceRequest.requestId : 'Record a food, laundry or transport request for a guest'}"></p>
+        </div>
+        <a th:href="@{/services}" class="btn btn-secondary">Back to Service List</a>
+    </div>
+
+    <!-- Validation errors -->
+    <div th:if="${errors != null and !errors.isEmpty()}" class="alert alert-danger">
+        <strong>Please correct the following errors:</strong>
+        <ul>
+            <li th:each="err : ${errors}" th:text="${err}">Validation error message</li>
+        </ul>
+    </div>
+
+    <!-- Service type: picked on create (reloads the page with that form), fixed on edit -->
+    <div class="card" th:if="${isEdit != true}" style="display: flex; gap: 0.75rem; align-items: center;">
+        <strong>Service type:</strong>
+        <a th:each="t : ${serviceTypes}" th:href="@{/services/create(serviceType=${t})}" th:text="${t}"
+           th:class="${t.name() == type} ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm'">FOOD</a>
+    </div>
+
+    <div class="card">
+        <form th:action="${isEdit == true} ? @{'/services/edit/' + ${serviceRequest.requestId}} : @{/services/create}"
+              th:object="${serviceRequest}" method="post">
+            <input type="hidden" name="serviceType" th:value="${type}">
+
+            <div class="form-grid">
+                <!-- Request ID (edit only) -->
+                <div class="form-group" th:if="${isEdit == true}">
+                    <label for="requestId">Request ID</label>
+                    <input type="text" id="requestId" th:field="*{requestId}" class="form-control" readonly style="background-color: #f1f5f9;">
+                </div>
+
+                <div class="form-group">
+                    <label>Service Type</label>
+                    <input type="text" th:value="${type}" class="form-control" readonly style="background-color: #f1f5f9;">
+                </div>
+
+                <!-- Customer: chosen on create, fixed on edit -->
+                <div class="form-group">
+                    <label for="customerId">Customer *</label>
+                    <select th:if="${isEdit != true}" id="customerId" th:field="*{customerId}" class="form-control" required>
+                        <option value="">Select a customer</option>
+                        <option th:each="c : ${customers}" th:value="${c.customerId}"
+                                th:text="${c.customerId + ' - ' + c.customerName}">C001 - Sunil Fernando</option>
+                    </select>
+                    <input th:if="${isEdit == true}" type="text" th:value="${serviceRequest.customerId}" class="form-control" readonly style="background-color: #f1f5f9;">
+                </div>
+
+                <!-- FOOD fields -->
+                <th:block th:if="${type == 'FOOD'}">
+                    <div class="form-group">
+                        <label for="itemName">Item Name * (2-60 letters)</label>
+                        <input type="text" id="itemName" th:field="*{itemName}" class="form-control" placeholder="e.g. Fried rice" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="quantity">Quantity * (1-50)</label>
+                        <input type="number" min="1" max="50" id="quantity" th:field="*{quantity}" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="unitPrice">Unit Price (LKR) * (more than 0)</label>
+                        <input type="number" step="0.01" min="0" id="unitPrice" th:field="*{unitPrice}" class="form-control" required>
+                    </div>
+                </th:block>
+
+                <!-- LAUNDRY fields -->
+                <th:block th:if="${type == 'LAUNDRY'}">
+                    <div class="form-group">
+                        <label for="itemCount">Number of Items * (1-100, LKR 250 each)</label>
+                        <input type="number" min="1" max="100" id="itemCount" th:field="*{itemCount}" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" th:field="*{express}">
+                            Express service (+50%)
+                        </label>
+                    </div>
+                </th:block>
+
+                <!-- TRANSPORT fields -->
+                <th:block th:if="${type == 'TRANSPORT'}">
+                    <div class="form-group">
+                        <label for="tripType">Trip Type *</label>
+                        <select id="tripType" th:field="*{tripType}" class="form-control" required>
+                            <option th:each="t : ${tripTypes}" th:value="${t}" th:text="${t}">PICKUP</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="vehicleType">Vehicle * (CAR LKR 120/km, VAN LKR 180/km)</label>
+                        <select id="vehicleType" th:field="*{vehicleType}" class="form-control" required>
+                            <option th:each="v : ${vehicleTypes}" th:value="${v}" th:text="${v}">CAR</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="location">Pickup / Drop Location * (3-100 characters)</label>
+                        <input type="text" id="location" th:field="*{location}" class="form-control" placeholder="e.g. Bandaranaike Airport" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="distanceKm">Distance (km) * (1-500)</label>
+                        <input type="number" step="0.1" min="1" max="500" id="distanceKm" th:field="*{distanceKm}" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="travelDate">Travel Date * (today or later)</label>
+                        <input type="date" id="travelDate" th:field="*{travelDate}" class="form-control" required>
+                    </div>
+                </th:block>
+
+                <!-- Notes -->
+                <div class="form-group full-width">
+                    <label for="notes">Notes (Optional, max 255 chars)</label>
+                    <input type="text" id="notes" th:field="*{notes}" class="form-control" maxlength="255" placeholder="e.g. No spicy food, room 203">
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <a th:href="${isEdit == true} ? @{'/services/view/' + ${serviceRequest.requestId}} : @{/services}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary" th:text="${isEdit == true ? 'Update Request' : 'Record Request'}">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>
