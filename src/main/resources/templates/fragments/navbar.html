@@ -33,6 +33,10 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 18v-8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"></path><path d="M3 14h18"></path><path d="M3 18v2M21 18v2"></path><path d="M7 8V6h4v2"></path></svg>
             ROOMS
         </a>
+        <a class="sidebar-link" th:href="@{/services}" data-path="/services">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 18h16"></path><path d="M6 18a6 6 0 0 1 12 0"></path><path d="M12 9v3"></path><path d="M10 6h4"></path></svg>
+            SERVICES
+        </a>
 
         <span class="sidebar-heading sidebar-heading-gap">RECORDS</span>
         <!-- Audit dropdown with the history (log) pages -->
@@ -48,6 +52,7 @@
                    th:if="${session.loggedInStaff.staffType.name() == 'ADMIN'}">STAFF</a>
                 <a class="sidebar-sublink" th:href="@{/customer/history}" data-path="/customer/history">CUSTOMERS</a>
                 <a class="sidebar-sublink" th:href="@{/room/history}" data-path="/room/history">ROOMS</a>
+                <a class="sidebar-sublink" th:href="@{/services/history}" data-path="/services/history">SERVICES</a>
             </div>
         </details>
     </nav>

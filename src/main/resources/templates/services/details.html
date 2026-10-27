@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Request Details - Hotel Reservation</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container" th:with="r=${serviceRequest}, type=${serviceRequest.serviceType.name()}, st=${serviceRequest.status.name()}">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title" th:text="${'Request ' + r.requestId}">Request SR001</h1>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">
+                <span class="role-badge" th:text="${type}">FOOD</span>
+                <span th:class="${st == 'COMPLETED'} ? 'status-badge status-active'
+                             : (${st == 'CANCELLED'} ? 'status-badge status-inactive' : 'role-badge')"
+                      th:text="${st}">REQUESTED</span>
+            </p>
+        </div>
+        <a th:href="@{/services}" class="btn btn-secondary">Back to Service List</a>
+    </div>
+
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+    <div class="card">
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Customer</label>
+                <span th:text="${customer != null ? r.customerId + ' - ' + customer.customerName : r.customerId}">C001 - Sunil Fernando</span>
+            </div>
+            <div class="form-group">
+                <label>Requested On</label>
+                <span th:text="${r.requestDate}">2026-10-27</span>
+            </div>
+            <div class="form-group">
+                <label>Details</label>
+                <span th:text="${r.summary}">2 x Fried rice</span>
+            </div>
+
+            <!-- FOOD -->
+            <th:block th:if="${type == 'FOOD'}">
+                <div class="form-group">
+                    <label>Unit Price (LKR)</label>
+                    <span th:text="${#numbers.formatDecimal(r.unitPrice, 1, 'COMMA', 2, 'POINT')}">1,200.00</span>
+                </div>
+            </th:block>
+
+            <!-- LAUNDRY -->
+            <th:block th:if="${type == 'LAUNDRY'}">
+                <div class="form-group">
+                    <label>Express</label>
+                    <span th:text="${r.express ? 'Yes (+50%)' : 'No'}">No</span>
+                </div>
+            </th:block>
+
+            <!-- TRANSPORT -->
+            <th:block th:if="${type == 'TRANSPORT'}">
+                <div class="form-group">
+                    <label>Distance</label>
+                    <span th:text="${r.distanceKm + ' km at LKR ' + r.ratePerKm + '/km'}">30 km</span>
+                </div>
+            </th:block>
+
+            <div class="form-group">
+                <label>Charge (LKR)</label>
+                <strong th:text="${#numbers.formatDecimal(r.calculateCharge(), 1, 'COMMA', 2, 'POINT')}">2,400.00</strong>
+            </div>
+            <div class="form-group full-width">
+                <label>Notes</label>
+                <span th:text="${r.notes != null ? r.notes : '-'}">-</span>
+            </div>
+        </div>
+
+        <!-- Actions depend on the status -->
+        <div class="form-actions">
+            <a th:if="${st == 'REQUESTED'}" th:href="@{'/services/edit/' + ${r.requestId}}" class="btn btn-secondary">Edit</a>
+
+            <form th:if="${st == 'REQUESTED'}" th:action="@{'/services/status/' + ${r.requestId}}" method="post">
+                <input type="hidden" name="status" value="IN_PROGRESS">
+                <button type="submit" class="btn btn-primary">Start</button>
+            </form>
+            <form th:if="${st == 'IN_PROGRESS'}" th:action="@{'/services/status/' + ${r.requestId}}" method="post">
+                <input type="hidden" name="status" value="COMPLETED">
+                <button type="submit" class="btn btn-primary">Mark Completed</button>
+            </form>
+            <form th:if="${st == 'REQUESTED' or st == 'IN_PROGRESS'}" th:action="@{'/services/status/' + ${r.requestId}}" method="post"
+                  onsubmit="return confirm('Cancel this request?');">
+                <input type="hidden" name="status" value="CANCELLED">
+                <button type="submit" class="btn btn-danger">Cancel Request</button>
+            </form>
+            <form th:if="${st != 'COMPLETED'}" th:action="@{'/services/delete/' + ${r.requestId}}" method="post"
+                  onsubmit="return confirm('Delete this request permanently?');">
+                <button type="submit" class="btn btn-danger">Delete</button>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>
