@@ -1,5 +1,9 @@
 package com.hotel.finance.controllers;
 
+import com.hotel.finance.enums.InvoiceStatus;
+
+import java.util.List;
+import java.util.stream.Collectors;
 import com.hotel.common.NotFoundException;
 import com.hotel.common.ValidationException;
 import com.hotel.finance.Invoice;
@@ -53,10 +57,35 @@ public class FinanceController {
     /* ---------- Invoices ---------- */
 
     @GetMapping
-    public String listInvoices(@RequestParam(value = "keyword", required = false) String keyword, Model model) {
-        model.addAttribute("invoiceList", invoiceService.search(keyword));
+    public String listInvoices(@RequestParam(value = "keyword", required = false) String keyword,
+                               @RequestParam(value = "status", required = false) InvoiceStatus status,
+                               Model model) {
+        // Search first, then keep only the chosen status (if one was picked)
+        List<Invoice> invoices = invoiceService.search(keyword);
+        if (status != null) {
+            invoices = invoices.stream()
+                    .filter(i -> i.getStatus() == status)
+                    .collect(Collectors.toList());
+        }
+        model.addAttribute("invoiceList", invoices);
         model.addAttribute("keyword", keyword);
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("statuses", InvoiceStatus.values());
+
+        // Count boxes are worked out from all invoices, not just the filtered ones
+        List<Invoice> all = invoiceService.getAll();
+        model.addAttribute("unpaidCount", countByStatus(all, InvoiceStatus.UNPAID));
+        model.addAttribute("partialCount", countByStatus(all, InvoiceStatus.PARTIALLY_PAID));
+        model.addAttribute("paidCount", countByStatus(all, InvoiceStatus.PAID));
+        model.addAttribute("balanceDue", all.stream()
+                .filter(i -> i.getStatus() != InvoiceStatus.VOID)
+                .mapToDouble(Invoice::getBalance)
+                .sum());
         return "finance/list";
+    }
+
+    private long countByStatus(List<Invoice> invoices, InvoiceStatus status) {
+        return invoices.stream().filter(i -> i.getStatus() == status).count();
     }
 
     @GetMapping("/invoice/view/{id}")

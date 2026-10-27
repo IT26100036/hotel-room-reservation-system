@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Management - Hotel Reservation System</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Invoices</h1>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Invoices and payments for hotel bookings</p>
+        </div>
+        <a th:href="@{/finance/invoice/create}" class="btn btn-primary">+ New Invoice</a>
+    </div>
+
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+    <!-- Count boxes -->
+    <div class="stat-grid">
+        <div class="stat-card">
+            <span class="stat-label"><span class="stat-dot dot-unpaid"></span>Unpaid</span>
+            <span class="stat-value" th:text="${unpaidCount}">0</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label"><span class="stat-dot dot-partial"></span>Partially paid</span>
+            <span class="stat-value" th:text="${partialCount}">0</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label"><span class="stat-dot dot-paid"></span>Paid</span>
+            <span class="stat-value" th:text="${paidCount}">0</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label"><span class="stat-dot dot-total"></span>Balance due (LKR)</span>
+            <span class="stat-value" th:text="${#numbers.formatDecimal(balanceDue, 1, 'COMMA', 2, 'POINT')}">0.00</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <!-- Search and status filter -->
+        <form th:action="@{/finance}" method="get" class="search-bar">
+            <input type="text" name="keyword" th:value="${keyword}"
+                   class="search-input" placeholder="Search by invoice, booking or customer ID...">
+            <select name="status" class="form-control" style="flex: 0 0 180px;">
+                <option value="">All statuses</option>
+                <option th:each="s : ${statuses}" th:value="${s}"
+                        th:text="${#strings.replace(s.name(), '_', ' ')}"
+                        th:selected="${s == selectedStatus}">UNPAID</option>
+            </select>
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a th:if="${(keyword != null and keyword != '') or selectedStatus != null}"
+               th:href="@{/finance}" class="btn btn-secondary">Clear</a>
+        </form>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                <tr>
+                    <th>Invoice</th>
+                    <th>Booking</th>
+                    <th>Customer</th>
+                    <th class="money">Total</th>
+                    <th class="money">Paid</th>
+                    <th class="money">Balance</th>
+                    <th>Status</th>
+                    <th>Issued</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(invoiceList)}">
+                    <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                        No invoices found.
+                    </td>
+                </tr>
+                <tr th:each="inv : ${invoiceList}">
+                    <td><strong th:text="${inv.invoiceId}">INV001</strong></td>
+                    <td th:text="${inv.bookingId}">B001</td>
+                    <td th:text="${inv.customerId}">C001</td>
+                    <td class="money" th:text="${#numbers.formatDecimal(inv.total, 1, 'COMMA', 2, 'POINT')}">16,000.00</td>
+                    <td class="money" th:text="${#numbers.formatDecimal(inv.amountPaid, 1, 'COMMA', 2, 'POINT')}">5,000.00</td>
+                    <td class="money" style="font-weight: 600;" th:text="${#numbers.formatDecimal(inv.balance, 1, 'COMMA', 2, 'POINT')}">11,000.00</td>
+                    <td>
+                        <span class="invoice-badge"
+                              th:classappend="${'invoice-' + #strings.toLowerCase(inv.status.name())}"
+                              th:text="${#strings.replace(inv.status.name(), '_', ' ')}">UNPAID</span>
+                    </td>
+                    <td style="color: var(--text-muted);" th:text="${inv.issuedDate}">2026-10-27</td>
+                    <td style="text-align: right;">
+                        <a th:href="@{'/finance/invoice/view/' + ${inv.invoiceId}}" class="btn btn-secondary btn-sm">View</a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>
