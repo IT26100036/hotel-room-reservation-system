@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking History Logs - Hotel Reservation</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Booking Activity Logs</h1>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Create, update, confirm, check-in, check-out, cancel and delete</p>
+        </div>
+        <a th:href="@{/booking}" class="btn btn-secondary">Back to Booking List</a>
+    </div>
+
+    <div class="card">
+        <div th:if="${#lists.isEmpty(logs)}" class="no-history">
+            <p>No history yet</p>
+        </div>
+        <ul th:if="${!#lists.isEmpty(logs)}" class="log-list">
+            <li th:each="log : ${logs}" class="log-item" th:text="${log}">
+                2026-10-27 10:15 | CREATE | S001 | Created WALK_IN booking B001 for C001 in room R001
+            </li>
+        </ul>
+    </div>
+</div>
+</body>
+</html>

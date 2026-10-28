@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Management - Hotel Reservation System</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Bookings</h1>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Walk-in and reservation bookings of the hotel</p>
+        </div>
+        <a th:href="@{/booking/create}" class="btn btn-primary">+ New Booking</a>
+    </div>
+
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+    <div class="card">
+        <!-- Search by booking, customer or room ID -->
+        <form th:action="@{/booking}" method="get" class="search-bar">
+            <input type="text" name="keyword" th:value="${keyword}"
+                   class="search-input" placeholder="Search by booking, customer or room ID...">
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a th:if="${(keyword != null and keyword != '') or selectedStatus != null}"
+               th:href="@{/booking}" class="btn btn-secondary">Clear</a>
+        </form>
+
+        <!-- Filter by status -->
+        <form th:action="@{/booking}" method="get" class="search-bar">
+            <select name="status" class="search-input" onchange="this.form.submit()">
+                <option value="">All statuses</option>
+                <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}"
+                        th:selected="${s == selectedStatus}">CONFIRMED</option>
+            </select>
+        </form>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                <tr>
+                    <th>Booking ID</th>
+                    <th>Type</th>
+                    <th>Customer</th>
+                    <th>Room</th>
+                    <th>Check-in</th>
+                    <th>Check-out</th>
+                    <th>Nights</th>
+                    <th>Guests</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(bookingList)}">
+                    <td colspan="10" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                        No bookings found.
+                    </td>
+                </tr>
+                <tr th:each="b : ${bookingList}">
+                    <td><strong th:text="${b.bookingId}">B001</strong></td>
+                    <td><span class="role-badge" th:text="${b.bookingType}">WALK_IN</span></td>
+                    <td th:text="${b.customerId}">C001</td>
+                    <td th:text="${b.roomId}">R001</td>
+                    <td th:text="${b.checkInDate}">2026-10-27</td>
+                    <td th:text="${b.checkOutDate}">2026-10-29</td>
+                    <td th:text="${b.nights}">2</td>
+                    <td th:text="${b.numberOfGuests}">1</td>
+                    <td>
+                        <span th:class="${b.status.name() == 'CONFIRMED' or b.status.name() == 'CHECKED_IN'} ? 'status-badge status-active'
+                                     : (${b.status.name() == 'CANCELLED' or b.status.name() == 'NO_SHOW'} ? 'status-badge status-inactive' : 'role-badge')"
+                              th:text="${b.status}">CONFIRMED</span>
+                    </td>
+                    <td>
+                        <a th:href="@{'/booking/view/' + ${b.bookingId}}" class="btn btn-primary btn-sm">View</a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>
