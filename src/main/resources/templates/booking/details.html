@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Details - Hotel Reservation</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container" th:with="st=${booking.status.name()}">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title" th:text="${'Booking ' + booking.bookingId}">Booking B001</h1>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">
+                <span class="role-badge" th:text="${booking.bookingType}">WALK_IN</span>
+                <span th:class="${st == 'CONFIRMED' or st == 'CHECKED_IN'} ? 'status-badge status-active'
+                             : (${st == 'CANCELLED' or st == 'NO_SHOW'} ? 'status-badge status-inactive' : 'role-badge')"
+                      th:text="${booking.status}">CONFIRMED</span>
+            </p>
+        </div>
+        <a th:href="@{/booking}" class="btn btn-secondary">Back to Booking List</a>
+    </div>
+
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+    <div class="card">
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Customer</label>
+                <span th:text="${customer != null ? booking.customerId + ' - ' + customer.customerName : booking.customerId}">C001 - Sunil Fernando</span>
+            </div>
+            <div class="form-group">
+                <label>Room</label>
+                <span th:text="${room != null ? room.roomNumber + ' (' + room.roomType + ', ' + booking.roomId + ')' : booking.roomId}">101 (SINGLE, R001)</span>
+            </div>
+            <div class="form-group">
+                <label>Check-in</label>
+                <span th:text="${booking.checkInDate}">2026-10-27</span>
+            </div>
+            <div class="form-group">
+                <label>Check-out</label>
+                <span th:text="${booking.checkOutDate}">2026-10-29</span>
+            </div>
+            <div class="form-group">
+                <label>Nights</label>
+                <span th:text="${booking.nights}">2</span>
+            </div>
+            <div class="form-group">
+                <label>Guests</label>
+                <span th:text="${booking.numberOfGuests}">1</span>
+            </div>
+            <div class="form-group">
+                <label>Room Total (LKR)</label>
+                <span th:text="${#numbers.formatDecimal(roomTotal, 1, 'COMMA', 2, 'POINT')}">16,000.00</span>
+            </div>
+            <div class="form-group">
+                <label>Advance Needed (LKR)</label>
+                <span th:text="${#numbers.formatDecimal(requiredAdvance, 1, 'COMMA', 2, 'POINT')}">0.00</span>
+            </div>
+            <div class="form-group">
+                <label>Created</label>
+                <span th:text="${booking.createdAt != null ? #strings.replace(booking.createdAt.toString(), 'T', ' ') : '-'}">2026-10-27 10:15</span>
+            </div>
+        </div>
+
+        <p th:if="${st == 'PENDING'}" style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+            This reservation is cancelled automatically if it is not confirmed within 24 hours of being created.
+        </p>
+
+        <!-- Actions depend on the status -->
+        <div class="form-actions">
+            <a th:if="${st == 'PENDING' or st == 'CONFIRMED'}" th:href="@{'/booking/edit/' + ${booking.bookingId}}" class="btn btn-secondary">Edit</a>
+
+            <form th:if="${st == 'PENDING'}" th:action="@{'/booking/confirm/' + ${booking.bookingId}}" method="post">
+                <button type="submit" class="btn btn-primary">Confirm (advance paid)</button>
+            </form>
+            <form th:if="${st == 'CONFIRMED'}" th:action="@{'/booking/checkin/' + ${booking.bookingId}}" method="post">
+                <button type="submit" class="btn btn-primary">Check In</button>
+            </form>
+            <form th:if="${st == 'CHECKED_IN'}" th:action="@{'/booking/checkout/' + ${booking.bookingId}}" method="post">
+                <button type="submit" class="btn btn-primary">Check Out</button>
+            </form>
+            <form th:if="${st == 'PENDING' or st == 'CONFIRMED'}" th:action="@{'/booking/cancel/' + ${booking.bookingId}}" method="post"
+                  onsubmit="return confirm('Cancel this booking?');">
+                <button type="submit" class="btn btn-danger">Cancel Booking</button>
+            </form>
+            <form th:if="${st == 'CANCELLED' or st == 'NO_SHOW'}" th:action="@{'/booking/delete/' + ${booking.bookingId}}" method="post"
+                  onsubmit="return confirm('Delete this booking permanently?');">
+                <button type="submit" class="btn btn-danger">Delete</button>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>
