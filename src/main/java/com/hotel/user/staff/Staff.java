@@ -1,6 +1,7 @@
 package com.hotel.user.staff;
 
 import com.hotel.user.User;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ public class Staff extends User {
     private StaffType staffType;
     private String position;
     private double salary;
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate joinedDate;
     private String username;
     private String password;

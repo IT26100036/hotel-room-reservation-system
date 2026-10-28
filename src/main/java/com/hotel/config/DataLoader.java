@@ -6,11 +6,13 @@ import com.hotel.user.staff.StaffType;
 import com.hotel.user.staff.Status;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 
 @Component
+@Order(1)   // runs before MockDataSeeder, so the admin is always S001
 public class DataLoader implements CommandLineRunner {
 
     private final StaffRepository staffRepository;
