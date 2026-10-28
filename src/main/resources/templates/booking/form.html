@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${isEdit == true ? 'Edit Booking - Hotel Reservation' : 'New Booking - Hotel Reservation'}">Booking Form</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title" th:text="${isEdit == true ? 'Edit Booking' : 'New Booking'}">Booking Form</h1>
+            <p style="color: var(--text-muted); font-size: 0.9rem;"
+               th:text="${isEdit == true ? 'Change the room, dates or guests of booking ' + booking.bookingId : 'Book a room for a walk-in guest or a reservation'}"></p>
+        </div>
+        <a th:href="@{/booking}" class="btn btn-secondary">Back to Booking List</a>
+    </div>
+
+    <!-- Validation errors -->
+    <div th:if="${errors != null and !errors.isEmpty()}" class="alert alert-danger">
+        <strong>Please correct the following errors:</strong>
+        <ul>
+            <li th:each="err : ${errors}" th:text="${err}">Validation error message</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <form th:action="${isEdit == true} ? @{'/booking/edit/' + ${booking.bookingId}} : @{/booking/create}"
+              th:object="${booking}" method="post">
+            <div class="form-grid">
+                <!-- Booking ID (edit only) -->
+                <div class="form-group" th:if="${isEdit == true}">
+                    <label for="bookingId">Booking ID</label>
+                    <input type="text" id="bookingId" th:field="*{bookingId}" class="form-control" readonly style="background-color: #f1f5f9;">
+                </div>
+
+                <!-- Booking type: chosen on create, fixed on edit -->
+                <div class="form-group">
+                    <label for="bookingType">Booking Type *</label>
+                    <select th:if="${isEdit != true}" id="bookingType" name="bookingType" class="form-control" onchange="showTypeHint()" required>
+                        <option value="WALK_IN" th:selected="${booking.bookingType.name() == 'WALK_IN'}">WALK_IN (guest is here now)</option>
+                        <option value="RESERVATION" th:selected="${booking.bookingType.name() == 'RESERVATION'}">RESERVATION (booked for later)</option>
+                    </select>
+                    <th:block th:if="${isEdit == true}">
+                        <input type="hidden" id="bookingType" name="bookingType" th:value="${booking.bookingType}">
+                        <input type="text" th:value="${booking.bookingType}" class="form-control" readonly style="background-color: #f1f5f9;">
+                        <small style="color: var(--text-muted);">Booking type cannot be changed</small>
+                    </th:block>
+                    <small id="typeHint" style="color: var(--text-muted);"></small>
+                </div>
+
+                <!-- Customer: chosen on create, fixed on edit -->
+                <div class="form-group">
+                    <label for="customerId">Customer *</label>
+                    <select th:if="${isEdit != true}" id="customerId" th:field="*{customerId}" class="form-control" required>
+                        <option value="">Select a customer</option>
+                        <option th:each="c : ${customers}" th:value="${c.customerId}"
+                                th:text="${c.customerId + ' - ' + c.customerName}">C001 - Sunil Fernando</option>
+                    </select>
+                    <th:block th:if="${isEdit == true}">
+                        <input type="text" th:value="${booking.customerId}" class="form-control" readonly style="background-color: #f1f5f9;">
+                        <small style="color: var(--text-muted);">Customer cannot be changed</small>
+                    </th:block>
+                    <small th:if="${isEdit != true}" style="color: var(--text-muted);">
+                        Not in the list? <a th:href="@{/customer/create}">Register the customer</a> first.
+                    </small>
+                </div>
+
+                <!-- Room -->
+                <div class="form-group">
+                    <label for="roomId">Room *</label>
+                    <select id="roomId" th:field="*{roomId}" class="form-control" required>
+                        <option value="">Select a room</option>
+                        <option th:each="r : ${rooms}" th:value="${r.roomId}"
+                                th:text="${r.roomNumber + ' - ' + r.roomType + ' (max ' + r.capacity + ', LKR ' + #numbers.formatDecimal(r.pricePerNight, 1, 'COMMA', 2, 'POINT') + '/night)'}">101 - SINGLE</option>
+                    </select>
+                </div>
+
+                <!-- Check-in date -->
+                <div class="form-group">
+                    <label for="checkInDate">Check-in Date *</label>
+                    <input type="date" id="checkInDate" th:field="*{checkInDate}" class="form-control" required>
+                </div>
+
+                <!-- Check-out date -->
+                <div class="form-group">
+                    <label for="checkOutDate">Check-out Date * (after check-in)</label>
+                    <input type="date" id="checkOutDate" th:field="*{checkOutDate}" class="form-control" required>
+                </div>
+
+                <!-- Guests -->
+                <div class="form-group">
+                    <label for="numberOfGuests">Number of Guests * (up to the room capacity)</label>
+                    <input type="number" min="1" id="numberOfGuests" th:field="*{numberOfGuests}" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <a th:href="${isEdit == true} ? @{'/booking/view/' + ${booking.bookingId}} : @{/booking}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary" th:text="${isEdit == true ? 'Update Booking' : 'Create Booking'}">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Explains the chosen booking type under the drop-down
+    function showTypeHint() {
+        const type = document.getElementById("bookingType").value;
+        document.getElementById("typeHint").textContent = type === 'RESERVATION'
+            ? 'Starts PENDING. Pay 25% advance within 24 hours to confirm.'
+            : 'Starts CONFIRMED. Check-in date must be today.';
+    }
+    document.addEventListener('DOMContentLoaded', showTypeHint);
+</script>
+</body>
+</html>
